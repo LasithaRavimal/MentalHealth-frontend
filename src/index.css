@@ -1,0 +1,201 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --spotify-green: #1DB954;
+  --spotify-green-hover: #1ed760;
+  --spotify-green-light: #1ed760;
+  --spotify-green-dark: #169c46;
+  --spotify-black: #121212;
+  --spotify-dark-gray: #181818;
+  --spotify-light-gray: #282828;
+  --spotify-gray: #404040;
+  --text-white: #FFFFFF;
+  --text-gray: #B3B3B3;
+  --text-gray-dark: #A7A7A7;
+  /* Legacy vars for compatibility */
+  --primary-green: #1DB954;
+  --primary-green-hover: #1ed760;
+  --primary-green-light: #1ed760;
+  --primary-green-dark: #169c46;
+  --bg-primary: #121212;
+  --bg-secondary: #181818;
+  --bg-tertiary: #282828;
+  --text-primary: #FFFFFF;
+  --text-secondary: #B3B3B3;
+  --text-tertiary: #A7A7A7;
+  --border-light: #404040;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--spotify-black);
+  color: var(--text-white);
+}
+
+#root {
+  min-height: 100vh;
+  background-color: var(--spotify-black);
+}
+
+/* Custom scrollbar - Dark theme (Spotify style) */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--spotify-black);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--spotify-light-gray);
+  border-radius: 6px;
+  border: 2px solid var(--spotify-black);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--spotify-gray);
+}
+
+/* Range input styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-track {
+  background: var(--spotify-light-gray);
+  height: 4px;
+  border-radius: 2px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--spotify-green);
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  margin-top: -4px;
+  transition: background 0.2s, transform 0.2s;
+  opacity: 1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+input[type="range"]:hover::-webkit-slider-thumb {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  background: var(--spotify-green-hover);
+  transform: scale(1.2);
+}
+
+input[type="range"]::-moz-range-track {
+  background: var(--spotify-light-gray);
+  height: 4px;
+  border-radius: 2px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  background: var(--spotify-green);
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  opacity: 1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+input[type="range"]:hover::-moz-range-thumb {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+  background: var(--spotify-green-hover);
+  transform: scale(1.2);
+}
+
+/* Focus styles */
+*:focus {
+  outline: none;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--spotify-green);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Card hover effect */
+.card-hover {
+  transition: all 0.2s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  background-color: var(--spotify-light-gray);
+}
+
+/* Button styles */
+.btn-primary {
+  background-color: var(--spotify-green);
+  color: white;
+  transition: all 0.2s ease;
+  border: none;
+  border-radius: 9999px;
+  font-weight: 700;
+  padding: 0.5rem 1.5rem;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: var(--spotify-green-hover);
+  transform: scale(1.05);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+/* Input styles */
+.input-light {
+  background-color: var(--spotify-light-gray);
+  border: 1px solid transparent;
+  color: var(--text-white);
+  border-radius: 4px;
+}
+
+.input-light:focus {
+  border-color: var(--spotify-green);
+  box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.2);
+}
+
+/* Smooth transitions */
+* {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
