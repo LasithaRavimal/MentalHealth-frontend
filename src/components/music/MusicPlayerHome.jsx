@@ -37,7 +37,7 @@ const MusicPlayerHomeContent = () => {
   const handleSongPlay = (song) => {
     onPlaySong(song); // ✅ Session starts INSIDE PlayerContext
   };
-  
+
   return (
     <div className="flex-1 overflow-y-auto p-8 bg-gradient-to-b from-spotify-dark-gray to-spotify-black">
 
@@ -107,3 +107,33 @@ const MusicPlayerHomeContent = () => {
       <div className="mb-12">
         <PlaylistList />
       </div>
+
+      {/* ================= Browse Categories ================= */}
+      {categories.length > 0 && (
+        <div className="mb-12">
+          <h2 className="text-3xl font-bold text-white mb-6">Browse by Category</h2>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {categories.map(category => (
+              <div
+                key={category}
+                onClick={() => navigate(`/category/${encodeURIComponent(category)}`)}
+                className="bg-gradient-to-br from-spotify-light-gray to-spotify-gray rounded-lg p-6 text-center cursor-pointer hover:scale-105 transition"
+              >
+                <div className="font-semibold text-white">{category}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const MusicPlayerHome = () => (
+  <Layout>
+    <MusicPlayerHomeContent />
+  </Layout>
+);
+
+export default MusicPlayerHome;
