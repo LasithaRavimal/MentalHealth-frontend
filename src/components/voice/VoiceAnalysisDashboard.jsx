@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import VoiceRecorder from './VoiceRecorder';
+import VoiceUploader from './VoiceUploader';
 import AnalysisResults from './AnalysisResults';
 import { analyzeVoiceData } from '../../api/voiceAnalysisService';
 
@@ -22,6 +23,11 @@ const VoiceAnalysisDashboard = () => {
         <p className="mt-4 text-text-gray text-xs text-center italic">
           Your audio is processed locally for research purposes.
         </p>
+      </div>
+
+      <div className="bg-spotify-dark-gray p-8 rounded-xl border border-spotify-gray shadow-2xl">
+        <h2 className="text-2xl font-bold mb-6">Upload Audio</h2>
+        <VoiceUploader onUpload={handleProcessAudio} disabled={loading} />
       </div>
 
       <div className="bg-spotify-dark-gray p-8 rounded-xl border border-spotify-gray min-h-[300px]">
