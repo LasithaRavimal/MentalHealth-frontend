@@ -114,3 +114,160 @@ export const PlayerProvider = ({ children }) => {
     if (!activeSessionId && !sessionIsAdmin) {
       activeSessionId = await startSession(song.id);
     }
+
+    // Track song play (only if we have an active session and not admin)
+    if (activeSessionId && !sessionIsAdmin) {
+      playStartTimeRef.current = 0; // Always start from beginning for new song
+      trackSongPlay(song.id, song.category || 'calm', playStartTimeRef.current);
+    }
+    
+    // Resume from current position if already loaded
+    if (audioRef.current && isPlaying) {
+      await audioRef.current.play();
+    } else {
+      setIsPlaying(true);
+    }
+  }, [session, sessionIsAdmin, startSession, trackSongPlay, isPlaying, buildQueue, currentSong]);
+
+  // Load player state from localStorage on mount
+  useEffect(() => {
+    const savedSong = localStorage.getItem('currentSong');
+    const savedIsPlaying = localStorage.getItem('isPlaying');
+    const savedVolume = localStorage.getItem('volume');
+    
+    // Load playback preferences from localStorage
+    const savedPrefs = localStorage.getItem('userPreferences');
+    if (savedPrefs) {
+      try {
+        const prefs = JSON.parse(savedPrefs);
+        // Apply default shuffle mode
+        if (prefs.defaultShuffle !== undefined) {
+          setShuffleMode(prefs.defaultShuffle);
+        }
+        // Apply default volume (prefer userPreferences over direct volume key)
+        if (prefs.defaultVolume !== undefined) {
+          const vol = parseFloat(prefs.defaultVolume);
+          if (!isNaN(vol) && vol >= 0 && vol <= 1) {
+            setVolume(vol);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load user preferences:', e);
+      }
+    }
+
+    if (savedSong) {
+      try {
+        const song = JSON.parse(savedSong);
+        setCurrentSong(song);
+        // Restore per-song position if available
+        if (song && song.id) {
+          const savedCurrentTime = localStorage.getItem(`currentTime_${song.id}`);
+          if (savedCurrentTime) {
+            const time = parseFloat(savedCurrentTime);
+            if (!isNaN(time) && time >= 0) {
+              setCurrentTime(time);
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load saved song:', e);
+      }
+    }
+    if (savedIsPlaying === 'true') {
+      setIsPlaying(true);
+    }
+    // Only apply savedVolume if userPreferences didn't override it
+    if (savedVolume && !savedPrefs) {
+      const vol = parseFloat(savedVolume);
+      if (!isNaN(vol) && vol >= 0 && vol <= 1) {
+        setVolume(vol);
+      }
+    }
+  }, []);
+
+  // Save player state to localStorage
+  useEffect(() => {
+    if (currentSong) {
+      localStorage.setItem('currentSong', JSON.stringify(currentSong));
+    } else {
+      localStorage.removeItem('currentSong');
+    }
+  }, [currentSong]);
+
+  useEffect(() => {
+    localStorage.setItem('isPlaying', isPlaying.toString());
+  }, [isPlaying]);
+
+  useEffect(() => {
+    localStorage.setItem('volume', volume.toString());
+  }, [volume]);
+
+  useEffect(() => {
+    // Save currentTime per song ID
+    if (currentSong && currentSong.id && currentTime > 0) {
+      localStorage.setItem(`currentTime_${currentSong.id}`, currentTime.toString());
+    }
+  }, [currentTime, currentSong]);
+
+  // Set audio volume
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+    }
+  }, [volume]);
+
+  // Load and play audio when song changes
+  useEffect(() => {
+    if (currentSong && audioRef.current) {
+      const isDifferentSong = previousSongIdRef.current !== null && previousSongIdRef.current !== currentSong.id;
+      
+      audioRef.current.src = currentSong.audio_url || '';
+      audioRef.current.load();
+      
+      // Only restore saved position if it's the SAME song (not a different one)
+      if (!isDifferentSong) {
+        // Same song - check if there's a saved position
+        const savedTime = localStorage.getItem(`currentTime_${currentSong.id}`);
+        if (savedTime && parseFloat(savedTime) > 0) {
+          // Restore saved position (user paused this song before)
+          audioRef.current.currentTime = parseFloat(savedTime);
+          setCurrentTime(parseFloat(savedTime));
+        } else {
+          // No saved position - start from beginning
+          setCurrentTime(0);
+          audioRef.current.currentTime = 0;
+        }
+      } else {
+        // Different song - always start from beginning
+        setCurrentTime(0);
+        audioRef.current.currentTime = 0;
+        // Clear any saved position for this song to ensure fresh start
+        localStorage.removeItem(`currentTime_${currentSong.id}`);
+      }
+      
+      // Update previous song ID after processing
+      previousSongIdRef.current = currentSong.id;
+
+      if (isPlaying) {
+        audioRef.current.play().catch(e => console.error("Error playing audio:", e));
+      }
+    } else if (!currentSong && audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = '';
+      previousSongIdRef.current = null;
+    }
+  }, [currentSong, isPlaying]);
+
+  // Track audio events
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleTimeUpdate = () => {
+      setCurrentTime(audio.currentTime);
+      // Update localStorage periodically per song ID
+      if (currentSong && currentSong.id && Math.floor(audio.currentTime) % 5 === 0) {
+        localStorage.setItem(`currentTime_${currentSong.id}`, audio.currentTime.toString());
+      }
+    };
