@@ -5,7 +5,7 @@ import TopBar from './PlayerTopBar';
 import PlayerBar from './player/PlayerBar';
 import PlayerExpanded from './player/PlayerExpanded';
 import PredictionModal from './session/PredictionModal';
-import { usePlayer } from '../admin/music/context/PlayerContext';
+import { usePlayer } from '../music/context/PlayerContext';
 
 const Layout = ({ children }) => {
   const navigate = useNavigate();

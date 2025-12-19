@@ -1,5 +1,5 @@
-import { SessionProvider } from '../admin/music/context/SessionContext';
-import { PlayerProvider } from '../admin/music/context/PlayerContext';
+import { SessionProvider } from '../music/context/SessionContext';
+import { PlayerProvider } from '../music/context/PlayerContext';
 
 const MusicWrapper = ({ children }) => {
   return (

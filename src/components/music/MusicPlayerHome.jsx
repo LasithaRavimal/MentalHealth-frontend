@@ -4,7 +4,7 @@ import Layout from './PlayerLayout';
 import SongCard from './songs/SongCard';
 import PlaylistList from './playlist/PlaylistList';
 import apiClient from '../../api/apiClient';
-import { usePlayer } from '../admin/music/context/PlayerContext';
+import { usePlayer } from '../music/context/PlayerContext';
 
 const MusicPlayerHomeContent = () => {
   const navigate = useNavigate();

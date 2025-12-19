@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { usePlayer } from '../../admin/music/context/PlayerContext';
+import { usePlayer } from '../../music/context/PlayerContext';
 import { useAuth } from '../../../context/AuthContext';
-import { useSession } from '../../admin/music/context/SessionContext';
+import { useSession } from '../../music/context/SessionContext';
 import { MdFavorite, MdFavoriteBorder } from 'react-icons/md';
 import apiClient from '../../../api/apiClient';
 

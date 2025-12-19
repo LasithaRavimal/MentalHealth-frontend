@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import apiClient from '../../api/apiClient';
-import { usePlayer } from '../admin/music/context/PlayerContext';
+import { usePlayer } from '../music/context/PlayerContext';
 
 const MusicPlayer = () => {
   const { user, logout } = useAuth();
