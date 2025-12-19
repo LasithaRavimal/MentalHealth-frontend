@@ -1,13 +1,19 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
-/* 🔹 Public & User Pages */
+/*  Public & User Pages */
 import LoginPage from './components/user/LoginPage';
 import LandingPage from './components/user/LandingPage';
 import Profile from './components/user/Profile';
 import ProfileSettings from './components/user/ProfileSettings';
 
-/* 🔹 Admin Pages */
+/*  Admin Pages */
+
+
+
+/*  Music */
+import MusicWrapper from './components/music/MusicWrapper';
+import MusicPlayerHome from './components/music/MusicPlayerHome';
 
 
 /* =========================
@@ -88,6 +94,17 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <ProfileSettings />
+          </ProtectedRoute>
+        }
+      />
+       {/* ----------  MUSIC PLAYER  ---------- */}
+      <Route
+        path="/musichome"
+        element={
+          <ProtectedRoute>
+            <MusicWrapper>
+              <MusicPlayerHome />
+            </MusicWrapper>
           </ProtectedRoute>
         }
       />

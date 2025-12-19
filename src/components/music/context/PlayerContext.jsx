@@ -3,7 +3,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { useSession } from '../../../components/music/context/SessionContext';
 import { handleSessionEnd } from '../../../utils/musicSessionEndHandler';
 import { showWarningToast } from '../../../utils/notifications';
-import apiClient from '../../../../api/apiClient';
+import apiClient from '../../../api/apiClient';
 
 const PlayerContext = createContext(null);
 
