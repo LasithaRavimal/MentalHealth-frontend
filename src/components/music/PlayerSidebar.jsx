@@ -69,7 +69,8 @@ const Sidebar = () => {
   };
 
   const userMenuItems = [
-    { path: '/home', icon: MdHome, label: 'MusicPlayerHome' },
+    { path: '/landing', icon: MdHome, label: 'Back to Home' },
+    { path: '/musichome', icon: MdHome, label: 'MusicPlayerHome' },
     { path: '/search', icon: MdSearch, label: 'Search' },
     { path: '/library', icon: MdLibraryMusic, label: 'Your Library' },
     { path: '/playlists', icon: MdPlaylistPlay, label: 'Playlists' },

@@ -528,7 +528,7 @@ export const PlayerProvider = ({ children }) => {
   const totalListeningSeconds = Array.from(session.songDurations.values())
     .reduce((sum, duration) => sum + duration, 0);
 
-  const MINIMUM_LISTENING_TIME_SECONDS = 10; // 5 minutes
+  const MINIMUM_LISTENING_TIME_SECONDS = 300; // 5 minutes
 
   if (totalListeningSeconds < MINIMUM_LISTENING_TIME_SECONDS) {
     const remainingMinutes = Math.ceil(
