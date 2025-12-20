@@ -62,13 +62,24 @@ export const SessionProvider = ({ children }) => {
       // Check if there's already an active session
       const existingSessionResponse = await apiClient.get('/sessions/active').catch(() => null);
       
+      // if (existingSessionResponse?.data?.session_id) {
+      //   // Use existing active session
+      //   setActiveSession(existingSessionResponse.data.session_id);
+      //   setSessionStartTime(new Date(existingSessionResponse.data.started_at));
+      //   updateActivity();
+      //   return existingSessionResponse.data.session_id;
+      // }
+
       if (existingSessionResponse?.data?.session_id) {
-        // Use existing active session
-        setActiveSession(existingSessionResponse.data.session_id);
-        setSessionStartTime(new Date(existingSessionResponse.data.started_at));
-        updateActivity();
-        return existingSessionResponse.data.session_id;
-      }
+  setActiveSession(existingSessionResponse.data.session_id);
+
+  // ✅ FIX: always reset start time to NOW
+  setSessionStartTime(new Date());
+
+  updateActivity();
+  return existingSessionResponse.data.session_id;
+}
+
       
       // Start new session
       const response = await apiClient.post('/sessions/start', {
