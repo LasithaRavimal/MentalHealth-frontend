@@ -485,29 +485,86 @@ export const PlayerProvider = ({ children }) => {
     }
   }, [currentSong]);
 
+  // const handleEndSession = useCallback(async () => {
+  //   // Calculate total listening time from songDurations Map
+  //   const totalListeningSeconds = Array.from(session.songDurations.values())
+  //     .reduce((sum, duration) => sum + duration, 0);
+    
+  //   const MINIMUM_LISTENING_TIME_SECONDS = 10; // 5 minutes
+    
+  //   // Validate minimum listening time
+  //   if (totalListeningSeconds < MINIMUM_LISTENING_TIME_SECONDS) {
+  //     const remainingMinutes = Math.ceil((MINIMUM_LISTENING_TIME_SECONDS - totalListeningSeconds) / 60);
+  //     showWarningToast(
+  //       `Keep listening at least 5min for better accuracy. You need ${remainingMinutes} more minute(s).`,
+  //       6000
+  //     );
+  //     return; // Don't proceed with session end
+  //   }
+    
+  //   // Proceed with normal flow if validation passes
+  //   const predictionResult = await handleSessionEnd(session, (pred) => {
+  //     setPrediction(pred);
+  //     setShowPredictionModal(true);
+  //   });
+  // }, [session]);
   const handleEndSession = useCallback(async () => {
-    // Calculate total listening time from songDurations Map
-    const totalListeningSeconds = Array.from(session.songDurations.values())
-      .reduce((sum, duration) => sum + duration, 0);
-    
-    const MINIMUM_LISTENING_TIME_SECONDS = 300; // 5 minutes
-    
-    // Validate minimum listening time
-    if (totalListeningSeconds < MINIMUM_LISTENING_TIME_SECONDS) {
-      const remainingMinutes = Math.ceil((MINIMUM_LISTENING_TIME_SECONDS - totalListeningSeconds) / 60);
-      showWarningToast(
-        `Keep listening at least 5min for better accuracy. You need ${remainingMinutes} more minute(s).`,
-        6000
-      );
-      return; // Don't proceed with session end
+  // ✅ 1. Force-save current playing duration
+  if (
+    audioRef.current &&
+    currentSong &&
+    playStartTimeRef.current !== null &&
+    !sessionIsAdmin
+  ) {
+    const listenedDuration =
+      audioRef.current.currentTime - playStartTimeRef.current;
+
+    if (listenedDuration > 0) {
+      trackSongPause(currentSong.id, listenedDuration);
     }
-    
-    // Proceed with normal flow if validation passes
-    const predictionResult = await handleSessionEnd(session, (pred) => {
-      setPrediction(pred);
-      setShowPredictionModal(true);
-    });
-  }, [session]);
+  }
+
+  // ✅ 2. Calculate total listening time
+  const totalListeningSeconds = Array.from(session.songDurations.values())
+    .reduce((sum, duration) => sum + duration, 0);
+
+  const MINIMUM_LISTENING_TIME_SECONDS = 10; // 5 minutes
+
+  if (totalListeningSeconds < MINIMUM_LISTENING_TIME_SECONDS) {
+    const remainingMinutes = Math.ceil(
+      (MINIMUM_LISTENING_TIME_SECONDS - totalListeningSeconds) / 60
+    );
+
+    showWarningToast(
+      `Keep listening at least 5 minutes for better accuracy.
+You need ${remainingMinutes} more minute(s).`,
+      6000
+    );
+    return;
+  }
+
+  // ✅ 3. End session + get prediction
+  await handleSessionEnd(session, (pred) => {
+    setPrediction(pred);
+    setShowPredictionModal(true);
+  });
+
+  // ✅ 4. IMPORTANT: Reset player state
+  if (audioRef.current) {
+    audioRef.current.pause();
+  }
+
+  setIsPlaying(false);
+  playStartTimeRef.current = null;
+
+}, [
+  session,
+  currentSong,
+  trackSongPause,
+  sessionIsAdmin,
+  handleSessionEnd
+]);
+
 
   const value = {
     currentSong,
