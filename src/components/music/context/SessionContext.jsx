@@ -70,10 +70,10 @@ export const SessionProvider = ({ children }) => {
       //   return existingSessionResponse.data.session_id;
       // }
 
-      if (existingSessionResponse?.data?.session_id) {
+   if (existingSessionResponse?.data?.session_id) {
   setActiveSession(existingSessionResponse.data.session_id);
 
-  // ✅ FIX: always reset start time to NOW
+  // FIX: ML session start time MUST be NOW
   setSessionStartTime(new Date());
 
   updateActivity();

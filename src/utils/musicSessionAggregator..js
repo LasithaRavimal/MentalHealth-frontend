@@ -69,19 +69,39 @@ export const aggregateSessionData = (sessionData) => {
   }
   
   // 5. Session Length Bucket
-  let sessionLengthBucket = 'Less than 10 min';
-  if (sessionStartTime) {
-    const durationMinutes = (now - new Date(sessionStartTime)) / (1000 * 60);
-    if (durationMinutes < 10) {
-      sessionLengthBucket = 'Less than 10 min';
-    } else if (durationMinutes < 30) {
-      sessionLengthBucket = '10-30 min';
-    } else if (durationMinutes < 60) {
-      sessionLengthBucket = '30-60 min';
-    } else {
-      sessionLengthBucket = 'More than 1 hour';
-    }
-  }
+  // let sessionLengthBucket = 'Less than 10 min';
+  // if (sessionStartTime) {
+  //   const durationMinutes = (now - new Date(sessionStartTime)) / (1000 * 60);
+  //   if (durationMinutes < 10) {
+  //     sessionLengthBucket = 'Less than 10 min';
+  //   } else if (durationMinutes < 30) {
+  //     sessionLengthBucket = '10-30 min';
+  //   } else if (durationMinutes < 60) {
+  //     sessionLengthBucket = '30-60 min';
+  //   } else {
+  //     sessionLengthBucket = 'More than 1 hour';
+  //   }
+  // }
+ // 5. Session Length Bucket (based on actual listening time)
+let sessionLengthBucket = 'Less than 10 min';
+
+// Calculate total listening seconds from songDurations
+const totalListeningSeconds = Array.from(songDurations.values())
+  .reduce((sum, d) => sum + d, 0);
+
+const durationMinutes = totalListeningSeconds / 60;
+
+if (durationMinutes < 10) {
+  sessionLengthBucket = 'Less than 10 min';
+} else if (durationMinutes < 30) {
+  sessionLengthBucket = '10-30 min';
+} else if (durationMinutes < 60) {
+  sessionLengthBucket = '30-60 min';
+} else {
+  sessionLengthBucket = 'More than 1 hour';
+}
+
+
   
   // 6. Volume Level Bucket (average volume)
   let volumeLevelBucket = 'Medium';
