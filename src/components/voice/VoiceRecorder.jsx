@@ -1,8 +1,11 @@
 import React, { useState, useRef } from 'react';
 import AudioVisualizer from './AudioVisualizer';
+import ConfirmationDialog from './ConfirmationDialog';
 
 const VoiceRecorder = ({ onStop, disabled }) => {
   const [isRecording, setIsRecording] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [pendingBlob, setPendingBlob] = useState(null);
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
 
@@ -12,8 +15,12 @@ const VoiceRecorder = ({ onStop, disabled }) => {
     mediaRecorderRef.current.ondataavailable = (e) => chunksRef.current.push(e.data);
     mediaRecorderRef.current.onstop = () => {
       const blob = new Blob(chunksRef.current, { type: 'audio/ogg; codecs=opus' });
-      onStop(blob);
+      setPendingBlob(blob);
+      setShowConfirmation(true);
       chunksRef.current = [];
+      
+      // Stop all tracks to release the microphone
+      stream.getTracks().forEach(track => track.stop());
     };
     mediaRecorderRef.current.start();
     setIsRecording(true);
@@ -24,19 +31,40 @@ const VoiceRecorder = ({ onStop, disabled }) => {
     setIsRecording(false);
   };
 
+  const handleConfirm = () => {
+    setShowConfirmation(false);
+    onStop(pendingBlob);
+    setPendingBlob(null);
+  };
+
+  const handleCancel = () => {
+    setShowConfirmation(false);
+    setPendingBlob(null);
+  };
+
   return (
-    <div className="flex flex-col items-center p-4 bg-spotify-light-gray rounded-lg">
-      <AudioVisualizer isRecording={isRecording} />
-      <button
-        onClick={isRecording ? stopRecording : startRecording}
-        disabled={disabled}
-        className={`mt-4 px-6 py-2 rounded-full font-bold transition ${
-          isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-spotify-green hover:bg-spotify-green-hover text-black'
-        } disabled:opacity-50`}
-      >
-        {isRecording ? 'Stop Recording' : 'Start Recording'}
-      </button>
-    </div>
+    <>
+      <div className="flex flex-col items-center p-4 bg-spotify-light-gray rounded-lg">
+        <AudioVisualizer isRecording={isRecording} />
+        <button
+          onClick={isRecording ? stopRecording : startRecording}
+          disabled={disabled}
+          className={`mt-4 px-6 py-2 rounded-full font-bold transition ${
+            isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-spotify-green hover:bg-spotify-green-hover text-black'
+          } disabled:opacity-50`}
+        >
+          {isRecording ? 'Stop Recording' : 'Start Recording'}
+        </button>
+      </div>
+
+      <ConfirmationDialog
+        isOpen={showConfirmation}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+        title="Submit Recording?"
+        message="Are you sure you want to submit this audio recording for analysis?"
+      />
+    </>
   );
 };
 
