@@ -8,7 +8,7 @@ import Profile from './components/user/Profile';
 import ProfileSettings from './components/user/ProfileSettings';
 
 /*  Admin Pages */
-
+import SongManagement from './components/admin/music/SongManagement';
 
 
 /*  Music */
@@ -105,6 +105,15 @@ function AppRoutes() {
             <MusicWrapper>
               <MusicPlayerHome />
             </MusicWrapper>
+          </ProtectedRoute>
+        }
+      />
+      {/* ---------- Admin ---------- */}
+      <Route
+        path="/admin/songs"
+        element={
+          <ProtectedRoute requireAdmin>
+            <SongManagement />
           </ProtectedRoute>
         }
       />
