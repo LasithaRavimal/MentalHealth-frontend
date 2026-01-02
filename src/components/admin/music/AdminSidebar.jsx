@@ -15,10 +15,8 @@ const AdminSidebar = () => {
   const isActive = (path) => location.pathname === path;
 
   const menuItems = [
-    { path: '/admin', icon: MdDashboard, label: 'Dashboard' },
-    { path: '/admin/songs', icon: MdMusicNote, label: 'Song Management' },
-    { path: '/admin/users', icon: MdPeople, label: 'User Management' },
-    { path: '/admin/analytics', icon: MdAnalytics, label: 'Analytics' },
+    { path: '/admin', icon: MdDashboard, label: 'Song Management' },
+    
   ];
 
   return (

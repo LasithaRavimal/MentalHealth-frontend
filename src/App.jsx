@@ -110,7 +110,7 @@ function AppRoutes() {
       />
       {/* ---------- Admin ---------- */}
       <Route
-        path="/admin/songs"
+        path="/admin"
         element={
           <ProtectedRoute requireAdmin>
             <SongManagement />

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import AdminSidebar from './AdminSidebar';
 import SongEditModal from '../music/SongEditModal';
 import apiClient from '../../../api/apiClient';
-import { SONG_CATEGORIES } from '../../../constants/categories';
+import { SONG_CATEGORIES } from './constants/categories';
 import { showSuccessToast, showErrorToast, showWarningToast } from '../../../utils/notifications';
 import { MdSearch, MdFilterList, MdVisibility, MdVisibilityOff, MdImage } from 'react-icons/md';
 
