@@ -25,10 +25,10 @@ const VoiceAnalysisDashboard = () => {
       // Call the API
       const response = await analyzeVoice(audioFile);
       
-      console.log('✅ Analysis successful:', response);
+      console.log(' Analysis successful:', response);
       setResults(response);
     } catch (error) {
-      console.error('❌ Error processing audio:', error);
+      console.error(' Error processing audio:', error);
       setError(error.message || 'Failed to analyze audio. Please try again.');
     } finally {
       setLoading(false);

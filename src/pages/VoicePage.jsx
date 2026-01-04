@@ -23,7 +23,7 @@ export default function VoicePage() {
               </li>
               <li className="flex items-start">
                 <span className="text-spotify-green mr-2">•</span>
-                Speak naturally for at least 15-30 seconds.
+                Speak naturally 
               </li>
               <li className="flex items-start">
                 <span className="text-spotify-green mr-2">•</span>
