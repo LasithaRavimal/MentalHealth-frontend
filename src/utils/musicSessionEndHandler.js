@@ -3,7 +3,7 @@
  */
 
 import apiClient from '../api/apiClient';
-import { aggregateSessionData } from './musicSessionAggregator.';
+import { aggregateSessionData } from './musicSessionAggregator';
 import { showStressAlert, showDepressionAlert } from './notifications';
 
 export const handleSessionEnd = async (sessionContext, onPredictionReceived = null) => {
