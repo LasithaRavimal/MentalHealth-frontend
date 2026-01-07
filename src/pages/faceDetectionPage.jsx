@@ -11,7 +11,7 @@ const FaceDetectionPage = () => {
   const navigate = useNavigate();
 
   const videoRef = useRef(null);
-  const canvasRef = useRef(null);
+  const canvasRef = useRef(null); 
   const streamRef = useRef(null);
   const intervalRef = useRef(null);
   const inFlightRef = useRef(false);
