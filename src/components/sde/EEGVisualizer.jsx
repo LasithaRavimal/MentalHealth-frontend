@@ -8,6 +8,8 @@ import {
   Tooltip,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
+import { useState } from "react";
+import EEGScalpLayout from "./EEGScalpLayout";
 
 ChartJS.register(
   LineElement,
@@ -24,20 +26,22 @@ const COLORS = [
   "#2ecc71", "#e74c3c", "#3498db"
 ];
 
-export default function EEGVisualizer({ eeg }) {
-  if (!eeg || !eeg.signals || !eeg.channels) {
-    return (
-      <div className="bg-bg-tertiary p-4 rounded-xl text-text-secondary">
-        EEG signal data not available
-      </div>
-    );
-  }
+const CHANNELS = [
+  "Fp1", "Fp2", "F3", "F4",
+  "C3", "C4", "P3", "P4", "O1"
+];
 
-  const labels = eeg.signals?.[0]?.map((_, i) => i) || [];
+export default function EEGVisualizer({ eeg }) {
+  const [activeChannel, setActiveChannel] = useState("P3"); // default
+
+  if (!eeg || !Array.isArray(eeg.signals)) return null;
+
+  const labels = eeg.signals[0].map((_, i) => i);
 
   const datasets = eeg.signals.map((signal, idx) => ({
-    label: eeg.channels[idx] || `Channel ${idx + 1}`,
+    label: CHANNELS[idx],
     data: signal,
+    hidden: CHANNELS[idx] !== activeChannel, // 🔑 only show selected
     borderColor: COLORS[idx % COLORS.length],
     borderWidth: 1,
     pointRadius: 0,
@@ -46,15 +50,26 @@ export default function EEGVisualizer({ eeg }) {
 
   return (
     <div className="bg-bg-tertiary p-4 rounded-xl">
-      <h3 className="font-semibold mb-2">EEG Signal Pattern</h3>
-      <div className="h-[300px]">
+      <h3 className="font-semibold mb-3">EEG Signal Pattern</h3>
+
+      {/* Channel selector */}
+      <select
+        value={activeChannel}
+        onChange={(e) => setActiveChannel(e.target.value)}
+        className="mb-4 bg-black text-white p-2 rounded"
+      >
+        {CHANNELS.map((ch) => (
+          <option key={ch} value={ch}>{ch}</option>
+        ))}
+      </select>
+
+      <div className="h-[280px] mb-6">
         <Line
           data={{ labels, datasets }}
           options={{
             responsive: true,
             maintainAspectRatio: false,
-            animation: false,
-            plugins: { legend: { position: "right" } },
+            plugins: { legend: { display: false } },
             scales: {
               x: { title: { display: true, text: "Time" } },
               y: { title: { display: true, text: "Amplitude (µV)" } },
@@ -62,6 +77,9 @@ export default function EEGVisualizer({ eeg }) {
           }}
         />
       </div>
+
+      {/* 🔗 Pass selected channel */}
+      <EEGScalpLayout activeChannels={[activeChannel]} />
     </div>
   );
 }
