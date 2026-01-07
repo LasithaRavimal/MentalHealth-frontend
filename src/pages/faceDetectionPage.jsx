@@ -13,6 +13,8 @@ import {
   MdCheckCircle,
   MdInsights,
   MdVerified,
+  MdWarningAmber,
+  MdFace,
 } from "react-icons/md";
 
 const CAPTURE_INTERVAL_MS = 1200;
@@ -21,6 +23,10 @@ const CAPTURE_WIDTH = 360;
 const SESSION_SECONDS = 180;
 
 const EMOTIONS = ["happy", "fear", "sad", "angry"];
+
+// no-face UX tuning
+const NO_FACE_STREAK_SHOW = 2; // show banner after N consecutive no-face checks
+const NO_FACE_STREAK_CLEAR_LATEST = 4; // clear latest after N consecutive no-face checks
 
 const initCounts = () =>
   EMOTIONS.reduce((acc, k) => {
@@ -39,15 +45,23 @@ const FaceDetectionPage = () => {
   const countdownIntervalRef = useRef(null);
   const inFlightRef = useRef(false);
 
-  // Refs to prevent stale state inside intervals
+  // Prevent stale state inside intervals
   const sessionActiveRef = useRef(false);
   const cameraOnRef = useRef(false);
+
+  // Face detector (browser native) + fallback heuristic
+  const faceDetectorRef = useRef(null);
+  const noFaceStreakRef = useRef(0);
 
   const [cameraOn, setCameraOn] = useState(false);
   const [mirror, setMirror] = useState(true);
 
   const [status, setStatus] = useState(null);
   const [error, setError] = useState("");
+
+  // Face detection UX (frontend-level)
+  const [noFace, setNoFace] = useState(false);
+  const [noFaceMsg, setNoFaceMsg] = useState("");
 
   // session
   const [sessionActive, setSessionActive] = useState(false);
@@ -74,6 +88,21 @@ const FaceDetectionPage = () => {
   useEffect(() => {
     cameraOnRef.current = cameraOn;
   }, [cameraOn]);
+
+  // init native FaceDetector if browser supports it
+  useEffect(() => {
+    try {
+      if (typeof window !== "undefined" && "FaceDetector" in window) {
+        // eslint-disable-next-line no-undef
+        faceDetectorRef.current = new window.FaceDetector({
+          fastMode: true,
+          maxDetectedFaces: 1,
+        });
+      }
+    } catch {
+      faceDetectorRef.current = null;
+    }
+  }, []);
 
   // ---------------- helpers ----------------
   const prettyConfidence = (c) => {
@@ -142,9 +171,99 @@ const FaceDetectionPage = () => {
     }, {});
   };
 
+  // backend “no face” detection (in case backend already supports it)
+  const isNoFaceBackend = (data, errMsg) => {
+    const msg = String(data?.detail ?? data?.message ?? data?.error ?? errMsg ?? "")
+      .toLowerCase()
+      .trim();
+
+    if (
+      msg.includes("no face") ||
+      msg.includes("face not detected") ||
+      msg.includes("no_faces") ||
+      msg.includes("not detect face")
+    )
+      return true;
+
+    if (data?.no_face === true || data?.face_detected === false) return true;
+
+    return false;
+  };
+
+  // quick heuristic for “camera covered / too dark / blank”
+  const looksCoveredOrBlank = (canvas) => {
+    try {
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      if (!ctx) return false;
+
+      const w = canvas.width;
+      const h = canvas.height;
+      if (!w || !h) return false;
+
+      const img = ctx.getImageData(0, 0, w, h).data;
+
+      // sample every N pixels to keep it cheap
+      const step = 16; // bigger = faster
+      let count = 0;
+      let sum = 0;
+      let sum2 = 0;
+
+      for (let y = 0; y < h; y += step) {
+        for (let x = 0; x < w; x += step) {
+          const i = (y * w + x) * 4;
+          const r = img[i] || 0;
+          const g = img[i + 1] || 0;
+          const b = img[i + 2] || 0;
+
+          // luminance
+          const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+          sum += lum;
+          sum2 += lum * lum;
+          count += 1;
+        }
+      }
+
+      if (!count) return false;
+
+      const mean = sum / count;
+      const variance = sum2 / count - mean * mean;
+      const std = Math.sqrt(Math.max(0, variance));
+
+      // thresholds tuned for “hand covering camera / black screen / very low detail”
+      const tooDark = mean < 25;
+      const tooFlat = std < 10;
+
+      return tooDark || tooFlat;
+    } catch {
+      return false;
+    }
+  };
+
+  // frontend face check: native FaceDetector if available, else heuristic fallback
+  const detectFaceFrontend = async (canvas) => {
+    // 1) native detector (best)
+    const fd = faceDetectorRef.current;
+    if (fd) {
+      try {
+        const faces = await fd.detect(canvas);
+        return Array.isArray(faces) && faces.length > 0;
+      } catch {
+        // if detector fails, fallback
+      }
+    }
+
+    // 2) heuristic fallback
+    // If camera is covered/black/blank, treat as no-face
+    if (looksCoveredOrBlank(canvas)) return false;
+
+    // Otherwise, we can't reliably detect face without a model,
+    // so allow backend to decide.
+    return true;
+  };
+
   const probsNormalized = useMemo(() => normalizeProbabilities(latest?.probabilities), [latest]);
 
-  // Current label bar should be first (top)
+  // current emotion bar should be first (top)
   const currentBars = useMemo(() => {
     const label = normalizeLabel(latest?.label);
     const base = EMOTIONS.map((k) => {
@@ -199,6 +318,17 @@ const FaceDetectionPage = () => {
     return overallStatus.charAt(0).toUpperCase() + overallStatus.slice(1);
   }, [overallStatus]);
 
+  const setNoFaceState = (msg) => {
+    setNoFace(true);
+    setNoFaceMsg(msg || "No face detected. Please face the camera and keep your face in the frame.");
+  };
+
+  const clearNoFaceState = () => {
+    setNoFace(false);
+    setNoFaceMsg("");
+    noFaceStreakRef.current = 0;
+  };
+
   // ---------------- lifecycle ----------------
   useEffect(() => {
     let mounted = true;
@@ -236,31 +366,6 @@ const FaceDetectionPage = () => {
     }
   };
 
-  const startCamera = async () => {
-    setError("");
-    setLatest(null);
-    setSessionEnded(false);
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user" },
-        audio: false,
-      });
-
-      streamRef.current = stream;
-      const video = videoRef.current;
-      if (video) {
-        video.srcObject = stream;
-        await video.play();
-      }
-
-      setCameraOn(true);
-    } catch (e) {
-      setError("Camera permission denied or camera not available.");
-      setCameraOn(false);
-    }
-  };
-
   const clearTimers = () => {
     if (captureIntervalRef.current) {
       clearInterval(captureIntervalRef.current);
@@ -285,6 +390,49 @@ const FaceDetectionPage = () => {
     }
   };
 
+  const startCamera = async () => {
+    setError("");
+    setLatest(null);
+    setSessionEnded(false);
+    clearNoFaceState();
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" },
+        audio: false,
+      });
+
+      // detect if user/browser stops camera
+      stream.getVideoTracks().forEach((track) => {
+        track.onended = () => {
+          setNoFaceState("Camera stopped. Start camera again to continue.");
+          stopSessionInternal(false);
+          setCameraOn(false);
+        };
+        track.onmute = () => {
+          // some browsers mark track muted when camera is blocked/covered
+          setNoFaceState("Camera is blocked. Uncover the camera / allow permission.");
+        };
+        track.onunmute = () => {
+          // when camera becomes available again
+          clearNoFaceState();
+        };
+      });
+
+      streamRef.current = stream;
+      const video = videoRef.current;
+      if (video) {
+        video.srcObject = stream;
+        await video.play();
+      }
+
+      setCameraOn(true);
+    } catch (e) {
+      setError("Camera permission denied or camera not available.");
+      setCameraOn(false);
+    }
+  };
+
   const stopCamera = () => {
     stopSessionInternal(false);
 
@@ -297,6 +445,8 @@ const FaceDetectionPage = () => {
       videoRef.current.srcObject = null;
     }
     setCameraOn(false);
+
+    setNoFaceState("Camera is off. Start camera to continue detection.");
   };
 
   const hardStopAll = () => {
@@ -324,6 +474,7 @@ const FaceDetectionPage = () => {
     setTimeLeft(SESSION_SECONDS);
     setSessionEnded(false);
     setError("");
+    clearNoFaceState();
   };
 
   const restartSession = () => {
@@ -345,6 +496,9 @@ const FaceDetectionPage = () => {
     }
     if (sessionActiveRef.current) return;
 
+    clearNoFaceState();
+    noFaceStreakRef.current = 0;
+
     sessionActiveRef.current = true;
     setSessionActive(true);
     setSessionEnded(false);
@@ -353,15 +507,12 @@ const FaceDetectionPage = () => {
     setTotalDetections(0);
     setTimeLeft(SESSION_SECONDS);
 
-    // immediate first sample
     await captureAndPredict();
 
-    // capture loop
     captureIntervalRef.current = setInterval(() => {
       captureAndPredict();
     }, CAPTURE_INTERVAL_MS);
 
-    // countdown loop
     countdownIntervalRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
@@ -399,6 +550,25 @@ const FaceDetectionPage = () => {
 
       ctx.drawImage(video, 0, 0, cw, ch);
 
+      // ✅ FRONTEND "NO FACE" CHECK (works even if backend always returns a label)
+      const faceOk = await detectFaceFrontend(canvas);
+      if (!faceOk) {
+        noFaceStreakRef.current += 1;
+
+        if (noFaceStreakRef.current >= NO_FACE_STREAK_SHOW) {
+          setNoFaceState("No face detected. Face the camera and keep your face in the frame.");
+        }
+        if (noFaceStreakRef.current >= NO_FACE_STREAK_CLEAR_LATEST) {
+          setLatest(null);
+        }
+
+        // don't call backend, don't count detections
+        return;
+      }
+
+      // If face is ok, clear no-face state (stops sticky banner)
+      clearNoFaceState();
+
       const dataUrl = canvas.toDataURL("image/jpeg", JPEG_QUALITY);
 
       const res = await apiClient.post("/face/predict-base64", {
@@ -406,6 +576,22 @@ const FaceDetectionPage = () => {
         filename: "frame.jpg",
         mime_type: "image/jpeg",
       });
+
+      // If backend indicates no-face (optional support)
+      if (isNoFaceBackend(res?.data, "")) {
+        noFaceStreakRef.current += 1;
+        if (noFaceStreakRef.current >= NO_FACE_STREAK_SHOW) {
+          setNoFaceState("No face detected. Face the camera and keep your face in the frame.");
+        }
+        if (noFaceStreakRef.current >= NO_FACE_STREAK_CLEAR_LATEST) {
+          setLatest(null);
+        }
+        return;
+      }
+
+      noFaceStreakRef.current = 0;
+      setNoFace(false);
+      setNoFaceMsg("");
 
       const label = normalizeLabel(res?.data?.label);
       const confidence = res?.data?.confidence;
@@ -428,9 +614,19 @@ const FaceDetectionPage = () => {
         setTotalDetections((t) => t + 1);
       }
     } catch (e) {
-      const msg =
-        e?.response?.data?.detail ||
-        "Prediction failed. Check model is loaded and API is healthy.";
+      const msg = e?.response?.data?.detail || "Prediction failed. Check model and API health.";
+
+      if (isNoFaceBackend(e?.response?.data, msg)) {
+        noFaceStreakRef.current += 1;
+        if (noFaceStreakRef.current >= NO_FACE_STREAK_SHOW) {
+          setNoFaceState("No face detected. Face the camera and keep your face in the frame.");
+        }
+        if (noFaceStreakRef.current >= NO_FACE_STREAK_CLEAR_LATEST) {
+          setLatest(null);
+        }
+        return;
+      }
+
       setError(msg);
     } finally {
       inFlightRef.current = false;
@@ -474,7 +670,7 @@ const FaceDetectionPage = () => {
       </div>
 
       <div className="max-w-6xl px-6 mx-auto pb-14">
-        {/* Header row with mini KPI (more user-friendly) */}
+        {/* Header */}
         <div className="flex flex-col gap-3 mb-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-4xl font-bold md:text-5xl">
@@ -501,17 +697,13 @@ const FaceDetectionPage = () => {
             <div className="px-4 py-3 border rounded-2xl border-spotify-gray bg-spotify-light-gray/10">
               <div className="text-xs text-text-gray">Model</div>
               <div className="mt-1 text-sm font-semibold text-white">
-                {modelReady === null
-                  ? "Checking..."
-                  : modelReady
-                  ? "Ready"
-                  : "Not loaded"}
+                {modelReady === null ? "Checking..." : modelReady ? "Ready" : "Not loaded"}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Control banner */}
+        {/* Controls */}
         <div className="mb-6">
           <div className="flex flex-col gap-3 p-4 border rounded-xl border-spotify-gray bg-spotify-light-gray/10 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-[240px]">
@@ -579,9 +771,9 @@ const FaceDetectionPage = () => {
           )}
         </div>
 
-        {/* Main grid: Right side top = Overall result, bottom = Tips */}
+        {/* Grid */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* LEFT: Camera + Current emotion */}
+          {/* Camera */}
           <div className="overflow-hidden border lg:col-span-2 rounded-2xl border-spotify-gray bg-spotify-light-gray/10 shadow-card">
             <div className="flex items-center justify-between p-4 border-b border-spotify-gray">
               <div>
@@ -627,10 +819,29 @@ const FaceDetectionPage = () => {
                 </div>
               )}
 
+              {/* No face overlay */}
+              {cameraOn && sessionActive && noFace && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/45">
+                  <div className="max-w-md p-4 mx-4 border rounded-2xl border-spotify-gray bg-spotify-dark-gray/70">
+                    <div className="flex items-center gap-2 text-lg font-semibold text-white">
+                      <MdWarningAmber className="text-2xl text-spotify-green" />
+                      No face detected
+                    </div>
+                    <div className="mt-2 text-sm text-text-gray">
+                      {noFaceMsg || "Please face the camera and keep your face in the frame."}
+                    </div>
+                    <div className="flex items-center gap-2 mt-3 text-xs text-text-gray">
+                      <MdFace className="text-base" />
+                      Tip: Move closer, improve lighting, and avoid covering the camera.
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <canvas ref={canvasRef} className="hidden" />
             </div>
 
-            {/* Current emotion states */}
+            {/* Current emotion */}
             <div className="p-5 border-t border-spotify-gray">
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -663,7 +874,7 @@ const FaceDetectionPage = () => {
                 </div>
               </div>
 
-              {/* Bars: current emotion bar first */}
+              {/* Bars */}
               <div className="mt-5 space-y-4">
                 {currentBars.map(({ k, pct }) => (
                   <div key={k} className="space-y-1">
@@ -701,9 +912,9 @@ const FaceDetectionPage = () => {
             </div>
           </div>
 
-          {/* RIGHT: Top = Overall Result, Bottom = Tips */}
+          {/* Right side */}
           <div className="space-y-6">
-            {/* Overall result (TOP RIGHT) */}
+            {/* Overall result */}
             <div className="p-6 border rounded-2xl border-spotify-gray bg-spotify-light-gray/10 shadow-card">
               <div className="flex items-center justify-between">
                 <div className="text-lg font-semibold">Overall result</div>
@@ -721,9 +932,15 @@ const FaceDetectionPage = () => {
                       <span>Run a full session to generate the final status.</span>
                     </div>
 
-                    <div className="text-xs text-text-gray">
-                      Tip: Start Tracking and keep your face centered for best accuracy.
-                    </div>
+                    {sessionActive && noFace ? (
+                      <div className="text-xs text-text-gray">
+                        Waiting for a valid face. Keep your face visible to collect detections.
+                      </div>
+                    ) : (
+                      <div className="text-xs text-text-gray">
+                        Tip: Keep your face centered and don’t cover the camera.
+                      </div>
+                    )}
                   </div>
                 ) : !totalDetections ? (
                   <div className="text-text-gray">
@@ -779,7 +996,7 @@ const FaceDetectionPage = () => {
               )}
             </div>
 
-            {/* Tips (BOTTOM RIGHT) */}
+            {/* Tips */}
             <div className="p-6 border rounded-2xl border-spotify-gray bg-spotify-light-gray/10 shadow-card">
               <div className="flex items-center gap-2 text-lg font-semibold">
                 <MdInfo className="text-xl text-spotify-green" />
@@ -808,12 +1025,15 @@ const FaceDetectionPage = () => {
 
                 <div className="flex gap-3 p-3 border rounded-xl border-spotify-gray bg-spotify-dark-gray/40">
                   <MdCheckCircle className="mt-0.5 text-lg text-spotify-green" />
-                  <div>Wait until it auto-ends and read the final result on the top card.</div>
+                  <div>
+                    If you cover/close the camera, the UI will flag{" "}
+                    <span className="font-semibold text-white">No face detected</span>.
+                  </div>
                 </div>
               </div>
 
               <div className="p-4 mt-5 text-sm border rounded-xl border-spotify-gray bg-spotify-dark-gray/40 text-text-gray">
-                If you see unstable outputs, click <span className="font-semibold text-white">Reset</span> and rerun the session.
+                If output becomes unstable, click <span className="font-semibold text-white">Reset</span> and rerun.
               </div>
             </div>
           </div>
