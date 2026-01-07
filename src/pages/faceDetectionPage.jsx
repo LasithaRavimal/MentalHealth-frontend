@@ -9,14 +9,18 @@ import {
   MdPlayArrow,
   MdReplay,
   MdTimer,
+  MdInfo,
+  MdCheckCircle,
+  MdInsights,
+  MdVerified,
 } from "react-icons/md";
 
-const CAPTURE_INTERVAL_MS = 1200; // backend load control
-const JPEG_QUALITY = 0.75; // 0..1
-const CAPTURE_WIDTH = 360; // downscale
-const SESSION_SECONDS = 180; // 3 minutes
+const CAPTURE_INTERVAL_MS = 1200;
+const JPEG_QUALITY = 0.75;
+const CAPTURE_WIDTH = 360;
+const SESSION_SECONDS = 180;
 
-const EMOTIONS = ["happy", "fear", "sad", "angry"]; // keep same order as your UI example
+const EMOTIONS = ["happy", "fear", "sad", "angry"];
 
 const initCounts = () =>
   EMOTIONS.reduce((acc, k) => {
@@ -35,6 +39,10 @@ const FaceDetectionPage = () => {
   const countdownIntervalRef = useRef(null);
   const inFlightRef = useRef(false);
 
+  // Refs to prevent stale state inside intervals
+  const sessionActiveRef = useRef(false);
+  const cameraOnRef = useRef(false);
+
   const [cameraOn, setCameraOn] = useState(false);
   const [mirror, setMirror] = useState(true);
 
@@ -46,7 +54,7 @@ const FaceDetectionPage = () => {
   const [sessionEnded, setSessionEnded] = useState(false);
   const [timeLeft, setTimeLeft] = useState(SESSION_SECONDS);
 
-  // latest prediction (for the "current emotion" UI)
+  // latest prediction
   const [latest, setLatest] = useState(null); // { label, confidence, probabilities }
 
   // overall aggregation
@@ -57,6 +65,15 @@ const FaceDetectionPage = () => {
     if (!status) return null;
     return !!status.loaded;
   }, [status]);
+
+  // keep refs synced
+  useEffect(() => {
+    sessionActiveRef.current = sessionActive;
+  }, [sessionActive]);
+
+  useEffect(() => {
+    cameraOnRef.current = cameraOn;
+  }, [cameraOn]);
 
   // ---------------- helpers ----------------
   const prettyConfidence = (c) => {
@@ -81,36 +98,67 @@ const FaceDetectionPage = () => {
     return v;
   };
 
-  const normalizeProbabilities = (probs) => {
-    // backend can send keys in any case; normalize to our 4 labels
-    const src = probs && typeof probs === "object" ? probs : {};
+  /**
+   * Accepts multiple backend shapes:
+   * - object map: { happy: 0.6, sad: 0.2 }
+   * - array of objects: [{ label:"Happy", probability:0.6 }]
+   * - array of tuples: [["Happy",0.6]]
+   */
+  const normalizeProbabilities = (raw) => {
     const out = {};
-    for (const [k, v] of Object.entries(src)) {
-      out[String(k).toLowerCase().trim()] = Number(v);
+
+    if (Array.isArray(raw)) {
+      for (const item of raw) {
+        if (!item) continue;
+
+        if (typeof item === "object" && !Array.isArray(item)) {
+          const k = item.label ?? item.emotion ?? item.name ?? item.class ?? item.key;
+          const v = item.probability ?? item.prob ?? item.score ?? item.value ?? item.p;
+          if (k != null && v != null) out[String(k).toLowerCase().trim()] = Number(v);
+          continue;
+        }
+
+        if (Array.isArray(item) && item.length >= 2) {
+          out[String(item[0]).toLowerCase().trim()] = Number(item[1]);
+        }
+      }
     }
 
-    // map common variants
+    if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+      for (const [k, v] of Object.entries(raw)) {
+        out[String(k).toLowerCase().trim()] = Number(v);
+      }
+    }
+
+    // map variants
     if (out.happiness != null && out.happy == null) out.happy = out.happiness;
     if (out.anger != null && out.angry == null) out.angry = out.anger;
     if (out.sadness != null && out.sad == null) out.sad = out.sadness;
     if (out.fearful != null && out.fear == null) out.fear = out.fearful;
 
-    // ensure all 4 exist (fallback 0)
     return EMOTIONS.reduce((acc, k) => {
       acc[k] = Number.isFinite(out[k]) ? out[k] : 0;
       return acc;
     }, {});
   };
 
-  // current probability bars under camera (like your screenshot)
+  const probsNormalized = useMemo(() => normalizeProbabilities(latest?.probabilities), [latest]);
+
+  // Current label bar should be first (top)
   const currentBars = useMemo(() => {
-    const probs = normalizeProbabilities(latest?.probabilities);
-    return EMOTIONS.map((k) => {
-      const raw = probs[k] || 0;
-      const pct = Math.max(0, Math.min(100, Math.round(raw * 100)));
+    const label = normalizeLabel(latest?.label);
+    const base = EMOTIONS.map((k) => {
+      const pct = Math.max(0, Math.min(100, Math.round((probsNormalized[k] || 0) * 100)));
       return { k, pct };
     });
-  }, [latest]);
+
+    if (!label || !EMOTIONS.includes(label)) return base;
+
+    const currentItem = base.find((x) => x.k === label);
+    const rest = base.filter((x) => x.k !== label);
+
+    return currentItem ? [currentItem, ...rest] : base;
+  }, [latest, probsNormalized]);
 
   const timeProgressPct = useMemo(() => {
     const done = SESSION_SECONDS - timeLeft;
@@ -119,10 +167,8 @@ const FaceDetectionPage = () => {
 
   const overallStatus = useMemo(() => {
     if (!sessionEnded || !totalDetections) return null;
-
     let best = EMOTIONS[0];
     let bestVal = counts[best] ?? 0;
-
     for (const k of EMOTIONS) {
       const v = counts[k] ?? 0;
       if (v > bestVal) {
@@ -147,6 +193,11 @@ const FaceDetectionPage = () => {
     if (sessionActive) return { label: "TRACKING", cls: "border-spotify-green text-spotify-green" };
     return { label: "READY", cls: "border-spotify-green/60 text-spotify-green/90" };
   }, [cameraOn, sessionActive]);
+
+  const overallLabelPretty = useMemo(() => {
+    if (!overallStatus) return "—";
+    return overallStatus.charAt(0).toUpperCase() + overallStatus.slice(1);
+  }, [overallStatus]);
 
   // ---------------- lifecycle ----------------
   useEffect(() => {
@@ -210,7 +261,7 @@ const FaceDetectionPage = () => {
     }
   };
 
-  const stopSessionInternal = (autoEnded) => {
+  const clearTimers = () => {
     if (captureIntervalRef.current) {
       clearInterval(captureIntervalRef.current);
       captureIntervalRef.current = null;
@@ -220,6 +271,11 @@ const FaceDetectionPage = () => {
       countdownIntervalRef.current = null;
     }
     inFlightRef.current = false;
+  };
+
+  const stopSessionInternal = (autoEnded) => {
+    clearTimers();
+    sessionActiveRef.current = false;
 
     if (sessionActive || autoEnded) {
       setSessionActive(false);
@@ -237,24 +293,15 @@ const FaceDetectionPage = () => {
       stream.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
-
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
-
     setCameraOn(false);
   };
 
   const hardStopAll = () => {
-    if (captureIntervalRef.current) {
-      clearInterval(captureIntervalRef.current);
-      captureIntervalRef.current = null;
-    }
-    if (countdownIntervalRef.current) {
-      clearInterval(countdownIntervalRef.current);
-      countdownIntervalRef.current = null;
-    }
-    inFlightRef.current = false;
+    clearTimers();
+    sessionActiveRef.current = false;
 
     const stream = streamRef.current;
     if (stream) {
@@ -285,10 +332,10 @@ const FaceDetectionPage = () => {
     resetSessionData();
   };
 
-  const startTracking = () => {
+  const startTracking = async () => {
     setError("");
 
-    if (!cameraOn) {
+    if (!cameraOnRef.current) {
       setError("Turn on the camera first.");
       return;
     }
@@ -296,9 +343,9 @@ const FaceDetectionPage = () => {
       setError("Model is not loaded on the server.");
       return;
     }
-    if (sessionActive) return;
+    if (sessionActiveRef.current) return;
 
-    // new session KPIs
+    sessionActiveRef.current = true;
     setSessionActive(true);
     setSessionEnded(false);
     setLatest(null);
@@ -306,14 +353,15 @@ const FaceDetectionPage = () => {
     setTotalDetections(0);
     setTimeLeft(SESSION_SECONDS);
 
+    // immediate first sample
+    await captureAndPredict();
+
     // capture loop
-    if (captureIntervalRef.current) clearInterval(captureIntervalRef.current);
     captureIntervalRef.current = setInterval(() => {
       captureAndPredict();
     }, CAPTURE_INTERVAL_MS);
 
-    // countdown
-    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    // countdown loop
     countdownIntervalRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
@@ -327,7 +375,7 @@ const FaceDetectionPage = () => {
 
   const captureAndPredict = async () => {
     if (inFlightRef.current) return;
-    if (!sessionActive) return;
+    if (!sessionActiveRef.current) return;
     if (!videoRef.current || !canvasRef.current) return;
 
     const video = videoRef.current;
@@ -361,9 +409,19 @@ const FaceDetectionPage = () => {
 
       const label = normalizeLabel(res?.data?.label);
       const confidence = res?.data?.confidence;
-      const probabilities = res?.data?.probabilities || {};
 
-      setLatest({ label, confidence, probabilities });
+      const rawProbs =
+        res?.data?.probabilities ??
+        res?.data?.probs ??
+        res?.data?.scores ??
+        res?.data?.predictions ??
+        null;
+
+      setLatest({
+        label,
+        confidence,
+        probabilities: rawProbs,
+      });
 
       if (EMOTIONS.includes(label)) {
         setCounts((prev) => ({ ...prev, [label]: (prev[label] || 0) + 1 }));
@@ -416,29 +474,50 @@ const FaceDetectionPage = () => {
       </div>
 
       <div className="max-w-6xl px-6 mx-auto pb-14">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold md:text-5xl">
-            Student Emotion <span className="text-spotify-green">Tracking</span>
-          </h1>
-          <p className="max-w-2xl mt-3 text-text-gray">
-            Start camera → Start tracking → wait 3 minutes → get the overall result.
-          </p>
+        {/* Header row with mini KPI (more user-friendly) */}
+        <div className="flex flex-col gap-3 mb-6 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-4xl font-bold md:text-5xl">
+              Student Emotion <span className="text-spotify-green">Tracking</span>
+            </h1>
+            <p className="max-w-2xl mt-2 text-text-gray">
+              Start camera → Start tracking → auto ends in 3 minutes → overall result appears.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="px-4 py-3 border rounded-2xl border-spotify-gray bg-spotify-light-gray/10">
+              <div className="text-xs text-text-gray">Session</div>
+              <div className="flex items-center gap-2 mt-1">
+                <span className={`text-xs px-3 py-1 rounded-full border ${statusBadge.cls}`}>
+                  {statusBadge.label}
+                </span>
+                <span className="text-xs text-text-gray">
+                  {sessionActive ? `Time left: ${formatTime(timeLeft)}` : `Length: 03:00`}
+                </span>
+              </div>
+            </div>
+
+            <div className="px-4 py-3 border rounded-2xl border-spotify-gray bg-spotify-light-gray/10">
+              <div className="text-xs text-text-gray">Model</div>
+              <div className="mt-1 text-sm font-semibold text-white">
+                {modelReady === null
+                  ? "Checking..."
+                  : modelReady
+                  ? "Ready"
+                  : "Not loaded"}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Control banner */}
         <div className="mb-6">
           <div className="flex flex-col gap-3 p-4 border rounded-xl border-spotify-gray bg-spotify-light-gray/10 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-[240px]">
-              <div className="text-sm text-text-gray">Service health</div>
-              <div className="font-semibold text-white">
-                {modelReady === null
-                  ? "Checking model availability..."
-                  : modelReady
-                  ? "Model ready"
-                  : "Model not loaded on server"}
-              </div>
+              <div className="text-sm text-text-gray">Controls</div>
               <div className="mt-1 text-xs text-text-gray">
-                Session length: 3 minutes • Sampling: ~{Math.round(CAPTURE_INTERVAL_MS / 100) / 10}s
+                Sampling: ~{Math.round(CAPTURE_INTERVAL_MS / 100) / 10}s • Session: 3 minutes
               </div>
             </div>
 
@@ -500,15 +579,15 @@ const FaceDetectionPage = () => {
           )}
         </div>
 
-        {/* Main grid */}
+        {/* Main grid: Right side top = Overall result, bottom = Tips */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Camera + Current emotion UI */}
+          {/* LEFT: Camera + Current emotion */}
           <div className="overflow-hidden border lg:col-span-2 rounded-2xl border-spotify-gray bg-spotify-light-gray/10 shadow-card">
             <div className="flex items-center justify-between p-4 border-b border-spotify-gray">
               <div>
                 <div className="font-semibold">Live Camera</div>
                 <div className="text-xs text-text-gray">
-                  Keep the face centered for stable predictions
+                  Keep face centered for stable confidence + probabilities
                 </div>
               </div>
 
@@ -551,30 +630,40 @@ const FaceDetectionPage = () => {
               <canvas ref={canvasRef} className="hidden" />
             </div>
 
-            {/* Current emotion states (UNDER CAMERA) */}
+            {/* Current emotion states */}
             <div className="p-5 border-t border-spotify-gray">
-              <div className="text-sm text-text-gray">Current emotion</div>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm text-text-gray">Current emotion</div>
+                  <div className="flex flex-wrap items-end gap-3 mt-1">
+                    <div className="text-3xl font-bold">
+                      {latest?.label ? (
+                        <span className="text-spotify-green">
+                          {latest.label.charAt(0).toUpperCase() + latest.label.slice(1)}
+                        </span>
+                      ) : (
+                        <span className="text-white">—</span>
+                      )}
+                    </div>
 
-              <div className="flex flex-wrap items-end gap-3 mt-1">
-                <div className="text-3xl font-bold">
-                  {latest?.label ? (
-                    <span className="text-spotify-green">
-                      {latest.label.charAt(0).toUpperCase() + latest.label.slice(1)}
-                    </span>
-                  ) : (
-                    <span className="text-white">—</span>
-                  )}
+                    <div className="text-text-gray">
+                      Confidence:{" "}
+                      <span className="font-semibold text-white">
+                        {latest?.confidence != null ? prettyConfidence(latest.confidence) : "—"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="text-text-gray">
-                  Confidence:{" "}
-                  <span className="font-semibold text-white">
-                    {latest?.confidence != null ? prettyConfidence(latest.confidence) : "—"}
-                  </span>
+                <div className="text-right">
+                  <div className="text-xs text-text-gray">Sampling</div>
+                  <div className="text-sm font-semibold text-white">
+                    ~{Math.round(CAPTURE_INTERVAL_MS / 100) / 10}s
+                  </div>
                 </div>
               </div>
 
-              {/* Bars exactly like your example */}
+              {/* Bars: current emotion bar first */}
               <div className="mt-5 space-y-4">
                 {currentBars.map(({ k, pct }) => (
                   <div key={k} className="space-y-1">
@@ -593,79 +682,139 @@ const FaceDetectionPage = () => {
 
               {sessionActive && (
                 <div className="mt-5">
-                  <div className="h-2 overflow-hidden rounded-full bg-spotify-gray">
+                  <div className="flex items-center justify-between text-xs text-text-gray">
+                    <span>Session progress</span>
+                    <span className="font-semibold text-white">{formatTime(timeLeft)}</span>
+                  </div>
+                  <div className="h-2 mt-2 overflow-hidden rounded-full bg-spotify-gray">
                     <div className="h-full bg-spotify-green" style={{ width: `${timeProgressPct}%` }} />
                   </div>
                   <div className="mt-2 text-xs text-text-gray">
-                    Tracking will auto-end at 03:00 and show the final overall result.
+                    Auto-end at 03:00 and publish overall result.
                   </div>
                 </div>
               )}
 
               <div className="mt-5 text-xs text-text-gray">
-                Requests are throttled (~{Math.round(CAPTURE_INTERVAL_MS / 100) / 10}s) to balance UX and backend load.
+                Requests are throttled to balance UX and backend load.
               </div>
             </div>
           </div>
 
-          {/* Overall result (final) */}
-          <div className="p-6 border rounded-2xl border-spotify-gray bg-spotify-light-gray/10 shadow-card">
-            <div className="text-lg font-semibold">Overall result</div>
-            <div className="mt-2 text-sm text-text-gray">
-              Final output after the 3-minute tracking session.
-            </div>
+          {/* RIGHT: Top = Overall Result, Bottom = Tips */}
+          <div className="space-y-6">
+            {/* Overall result (TOP RIGHT) */}
+            <div className="p-6 border rounded-2xl border-spotify-gray bg-spotify-light-gray/10 shadow-card">
+              <div className="flex items-center justify-between">
+                <div className="text-lg font-semibold">Overall result</div>
+                <MdInsights className="text-2xl text-spotify-green" />
+              </div>
+              <div className="mt-2 text-sm text-text-gray">
+                Published when the 3-minute session finishes.
+              </div>
 
-            <div className="p-4 mt-5 border rounded-xl border-spotify-gray bg-spotify-dark-gray/40">
-              {!sessionEnded ? (
-                <div className="text-text-gray">
-                  Start tracking and wait until the session completes.
-                </div>
-              ) : !totalDetections ? (
-                <div className="text-text-gray">
-                  No valid detections captured. Improve lighting and keep the face centered, then retry.
-                </div>
-              ) : (
-                <>
-                  <div className="text-sm text-text-gray">Overall status</div>
-                  <div className="mt-1 text-3xl font-bold text-spotify-green">
-                    {overallStatus}
+              <div className="p-4 mt-5 border rounded-xl border-spotify-gray bg-spotify-dark-gray/40">
+                {!sessionEnded ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-text-gray">
+                      <MdVerified className="text-xl text-spotify-green" />
+                      <span>Run a full session to generate the final status.</span>
+                    </div>
+
+                    <div className="text-xs text-text-gray">
+                      Tip: Start Tracking and keep your face centered for best accuracy.
+                    </div>
                   </div>
+                ) : !totalDetections ? (
+                  <div className="text-text-gray">
+                    No valid detections captured. Improve lighting and keep the face centered, then retry.
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-sm text-text-gray">Overall status</div>
+                    <div className="mt-1 text-3xl font-bold text-spotify-green">
+                      {overallLabelPretty}
+                    </div>
 
-                  <div className="mt-4 text-sm text-text-gray">Session distribution</div>
-
-                  <div className="mt-3 space-y-3">
-                    {overallDist.map(({ k, v, pct }) => (
-                      <div key={k} className="space-y-1">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-white">
-                            {k.charAt(0).toUpperCase() + k.slice(1)}
-                          </span>
-                          <span className="text-text-gray">
-                            {pct}% ({v})
-                          </span>
+                    <div className="mt-4 text-sm text-text-gray">Session distribution</div>
+                    <div className="mt-3 space-y-3">
+                      {overallDist.map(({ k, v, pct }) => (
+                        <div key={k} className="space-y-1">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-white">
+                              {k.charAt(0).toUpperCase() + k.slice(1)}
+                            </span>
+                            <span className="text-text-gray">
+                              {pct}% ({v})
+                            </span>
+                          </div>
+                          <div className="h-2 overflow-hidden rounded-full bg-spotify-gray">
+                            <div className="h-full bg-spotify-green" style={{ width: `${pct}%` }} />
+                          </div>
                         </div>
-                        <div className="h-2 overflow-hidden rounded-full bg-spotify-gray">
-                          <div className="h-full bg-spotify-green" style={{ width: `${pct}%` }} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
 
-                  <div className="mt-4 text-xs text-text-gray">
-                    Total detections:{" "}
-                    <span className="font-semibold text-white">{totalDetections}</span>
+                    <div className="mt-4 text-xs text-text-gray">
+                      Total detections:{" "}
+                      <span className="font-semibold text-white">{totalDetections}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {sessionActive && (
+                <div className="mt-5">
+                  <div className="flex items-center justify-between text-xs text-text-gray">
+                    <span>Time left</span>
+                    <span className="font-semibold text-white">
+                      <MdTimer className="inline-block mr-1 text-sm" />
+                      {formatTime(timeLeft)}
+                    </span>
                   </div>
-                </>
+                  <div className="h-2 mt-2 overflow-hidden rounded-full bg-spotify-gray">
+                    <div className="h-full bg-spotify-green" style={{ width: `${timeProgressPct}%` }} />
+                  </div>
+                </div>
               )}
             </div>
 
-            <div className="p-4 mt-6 border rounded-xl border-spotify-gray bg-spotify-dark-gray/40">
-              <div className="text-sm font-semibold">Runbook</div>
-              <ul className="mt-2 space-y-2 text-sm text-text-gray">
-                <li>Front lighting is a must (avoid backlight).</li>
-                <li>Keep one face only in view.</li>
-                <li>If results are unstable, reset and run again.</li>
-              </ul>
+            {/* Tips (BOTTOM RIGHT) */}
+            <div className="p-6 border rounded-2xl border-spotify-gray bg-spotify-light-gray/10 shadow-card">
+              <div className="flex items-center gap-2 text-lg font-semibold">
+                <MdInfo className="text-xl text-spotify-green" />
+                How to use
+              </div>
+
+              <div className="mt-4 space-y-3 text-sm text-text-gray">
+                <div className="flex gap-3 p-3 border rounded-xl border-spotify-gray bg-spotify-dark-gray/40">
+                  <MdCheckCircle className="mt-0.5 text-lg text-spotify-green" />
+                  <div>
+                    Click <span className="font-semibold text-white">Start Camera</span> and allow camera access.
+                  </div>
+                </div>
+
+                <div className="flex gap-3 p-3 border rounded-xl border-spotify-gray bg-spotify-dark-gray/40">
+                  <MdCheckCircle className="mt-0.5 text-lg text-spotify-green" />
+                  <div>
+                    Click <span className="font-semibold text-white">Start Tracking</span> to start the 3-minute session.
+                  </div>
+                </div>
+
+                <div className="flex gap-3 p-3 border rounded-xl border-spotify-gray bg-spotify-dark-gray/40">
+                  <MdCheckCircle className="mt-0.5 text-lg text-spotify-green" />
+                  <div>Face forward, keep your head still, and use front lighting.</div>
+                </div>
+
+                <div className="flex gap-3 p-3 border rounded-xl border-spotify-gray bg-spotify-dark-gray/40">
+                  <MdCheckCircle className="mt-0.5 text-lg text-spotify-green" />
+                  <div>Wait until it auto-ends and read the final result on the top card.</div>
+                </div>
+              </div>
+
+              <div className="p-4 mt-5 text-sm border rounded-xl border-spotify-gray bg-spotify-dark-gray/40 text-text-gray">
+                If you see unstable outputs, click <span className="font-semibold text-white">Reset</span> and rerun the session.
+              </div>
             </div>
           </div>
         </div>
