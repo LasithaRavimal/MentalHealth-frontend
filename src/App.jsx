@@ -12,6 +12,7 @@ import LoginPage from './components/user/LoginPage';
 import LandingPage from './components/user/LandingPage';
 import Profile from './components/user/Profile';
 import ProfileSettings from './components/user/ProfileSettings';
+import VoicePage from './pages/VoicePage';
 import EEGDetectionPage from "./pages/EEGDetectionPage";
 
 /*  Admin Pages */
@@ -129,6 +130,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <ProfileSettings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pages/VoicePage"
+        element={
+          <ProtectedRoute>
+            <VoicePage />
           </ProtectedRoute>
         }
       />

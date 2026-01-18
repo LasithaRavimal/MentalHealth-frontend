@@ -35,7 +35,7 @@ const LandingPage = () => {
   // Routes
   const routes = {
     face: '/face',
-    voice: '/voice',
+    voice: '../pages/VoicePage',
     eeg: '/eeg',
     music: '/musichome',
   };
