@@ -1,55 +1,41 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
+// App.jsx
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
-
-/*  Public & User Pages */
-import LoginPage from './components/user/LoginPage';
-import LandingPage from './components/user/LandingPage';
-import Profile from './components/user/Profile';
-import ProfileSettings from './components/user/ProfileSettings';
-import VoicePage from './pages/VoicePage';
+/* =========================
+   PAGES
+========================= */
+/* Public & User */
+import LoginPage from "./components/user/LoginPage";
+import LandingPage from "./components/user/LandingPage";
+import Profile from "./components/user/Profile";
+import ProfileSettings from "./components/user/ProfileSettings";
+import VoicePage from "./pages/VoicePage";
 import EEGDetectionPage from "./pages/EEGDetectionPage";
+import FaceDetectionPage from "./pages/faceDetectionPage"; // keep this path as-is (case sensitive in some OS)
 
-/*  Admin Pages */
-import SongManagement from './components/admin/music/SongManagement';
+/* Admin */
+import SongManagement from "./components/admin/music/SongManagement";
 
+/* Music */
+import MusicWrapper from "./components/music/MusicWrapper";
+import MusicPlayerHome from "./components/music/MusicPlayerHome";
 
-/*  Music */
-import MusicWrapper from './components/music/MusicWrapper';
-import MusicPlayerHome from './components/music/MusicPlayerHome';
-
-
- 
-import FaceDetectionPage from "./pages/faceDetectionPage";
-
- 
-
-
-
+/* =========================
+   SHARED UI
+========================= */
+const FullScreenLoader = () => (
+  <div className="flex items-center justify-center min-h-screen">Loading...</div>
+);
 
 /* =========================
    ROUTE GUARDS
 ========================= */
-
 const ProtectedRoute = ({ children, requireAdmin = false }) => {
   const { user, loading } = useAuth();
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        Loading...
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
+  if (loading) return <FullScreenLoader />;
+  if (!user) return <Navigate to="/login" replace />;
 
   if (requireAdmin && user.role !== "admin") {
     return <Navigate to="/landing" replace />;
@@ -61,13 +47,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
 const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        Loading...
-      </div>
-    );
-  }
+  if (loading) return <FullScreenLoader />;
 
   if (user) {
     return user.role === "admin" ? (
@@ -80,13 +60,28 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
+const RootRedirect = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) return <FullScreenLoader />;
+  if (!user) return <Navigate to="/login" replace />;
+
+  return user.role === "admin" ? (
+    <Navigate to="/admin" replace />
+  ) : (
+    <Navigate to="/landing" replace />
+  );
+};
+
 /* =========================
    APP ROUTES
 ========================= */
 function AppRoutes() {
-  console.log('AppRoutes mounted - current path:', window.location.pathname);
   return (
     <Routes>
+      {/* Root */}
+      <Route path="/" element={<RootRedirect />} />
+
       {/* ---------- Public ---------- */}
       <Route
         path="/login"
@@ -106,7 +101,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
- {/* ---------- FAce main page route ---------- */}
+
       <Route
         path="/face"
         element={
@@ -133,6 +128,8 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      {/* Keep your existing path + add a clean alias */}
       <Route
         path="/pages/VoicePage"
         element={
@@ -141,23 +138,11 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-       {/* ----------  MUSIC PLAYER  ---------- */}
       <Route
-        path="/musichome"
+        path="/voice"
         element={
           <ProtectedRoute>
-            <MusicWrapper>
-              <MusicPlayerHome />
-            </MusicWrapper>
-          </ProtectedRoute>
-        }
-      />
-      {/* ---------- Admin ---------- */}
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute requireAdmin>
-            <SongManagement />
+            <VoicePage />
           </ProtectedRoute>
         }
       />
@@ -171,30 +156,43 @@ function AppRoutes() {
         }
       />
 
-     
+      {/* ---------- Music ---------- */}
+      <Route
+        path="/musichome"
+        element={
+          <ProtectedRoute>
+            <MusicWrapper>
+              <MusicPlayerHome />
+            </MusicWrapper>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ---------- Admin ---------- */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute requireAdmin>
+            <SongManagement />
+          </ProtectedRoute>
+        }
+      />
 
       {/* ---------- Fallback ---------- */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }
 
-/* =======================
-   🚀 App Root
-======================= */
-
-function App() {
-  console.log('App mounted - pathname:', window.location.pathname);
+/* =========================
+   APP ROOT
+========================= */
+export default function App() {
   return (
     <Router>
-      {/* Visible debug badge (remove after diagnosing) */}
-      <div className="fixed top-3 right-3 bg-black text-white text-xs px-2 py-1 rounded z-50">DEBUG: App running</div>
       <AuthProvider>
         <AppRoutes />
       </AuthProvider>
     </Router>
   );
 }
-
-export default App;
