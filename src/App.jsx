@@ -12,6 +12,7 @@ import LoginPage from './components/user/LoginPage';
 import LandingPage from './components/user/LandingPage';
 import Profile from './components/user/Profile';
 import ProfileSettings from './components/user/ProfileSettings';
+import EEGDetectionPage from "./pages/EEGDetectionPage";
 
 /*  Admin Pages */
 import SongManagement from './components/admin/music/SongManagement';
@@ -82,6 +83,7 @@ const PublicRoute = ({ children }) => {
    APP ROUTES
 ========================= */
 function AppRoutes() {
+  console.log('AppRoutes mounted - current path:', window.location.pathname);
   return (
     <Routes>
       {/* ---------- Public ---------- */}
@@ -151,6 +153,17 @@ function AppRoutes() {
         }
       />
 
+      <Route
+        path="/eeg"
+        element={
+          <ProtectedRoute>
+            <EEGDetectionPage />
+          </ProtectedRoute>
+        }
+      />
+
+     
+
       {/* ---------- Fallback ---------- */}
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
@@ -163,8 +176,11 @@ function AppRoutes() {
 ======================= */
 
 function App() {
+  console.log('App mounted - pathname:', window.location.pathname);
   return (
     <Router>
+      {/* Visible debug badge (remove after diagnosing) */}
+      <div className="fixed top-3 right-3 bg-black text-white text-xs px-2 py-1 rounded z-50">DEBUG: App running</div>
       <AuthProvider>
         <AppRoutes />
       </AuthProvider>
