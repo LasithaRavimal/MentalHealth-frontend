@@ -1,13 +1,35 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 
-/* 🔹 Public & User Pages */
+
+/*  Public & User Pages */
 import LoginPage from './components/user/LoginPage';
 import LandingPage from './components/user/LandingPage';
 import Profile from './components/user/Profile';
 import ProfileSettings from './components/user/ProfileSettings';
+import VoicePage from './pages/VoicePage';
+import EEGDetectionPage from "./pages/EEGDetectionPage";
 
-/* 🔹 Admin Pages */
+/*  Admin Pages */
+import SongManagement from './components/admin/music/SongManagement';
+
+
+/*  Music */
+import MusicWrapper from './components/music/MusicWrapper';
+import MusicPlayerHome from './components/music/MusicPlayerHome';
+
+
+ 
+import FaceDetectionPage from "./pages/faceDetectionPage";
+
+ 
+
+
 
 
 /* =========================
@@ -18,14 +40,18 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        Loading...
+      </div>
+    );
   }
 
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  if (requireAdmin && user.role !== 'admin') {
+  if (requireAdmin && user.role !== "admin") {
     return <Navigate to="/landing" replace />;
   }
 
@@ -36,13 +62,19 @@ const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        Loading...
+      </div>
+    );
   }
 
   if (user) {
-    return user.role === 'admin'
-      ? <Navigate to="/admin" replace />
-      : <Navigate to="/landing" replace />;
+    return user.role === "admin" ? (
+      <Navigate to="/admin" replace />
+    ) : (
+      <Navigate to="/landing" replace />
+    );
   }
 
   return children;
@@ -52,6 +84,7 @@ const PublicRoute = ({ children }) => {
    APP ROUTES
 ========================= */
 function AppRoutes() {
+  console.log('AppRoutes mounted - current path:', window.location.pathname);
   return (
     <Routes>
       {/* ---------- Public ---------- */}
@@ -73,6 +106,15 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+ {/* ---------- FAce main page route ---------- */}
+      <Route
+        path="/face"
+        element={
+          <ProtectedRoute>
+            <FaceDetectionPage />
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         path="/profile"
@@ -91,6 +133,45 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/pages/VoicePage"
+        element={
+          <ProtectedRoute>
+            <VoicePage />
+          </ProtectedRoute>
+        }
+      />
+       {/* ----------  MUSIC PLAYER  ---------- */}
+      <Route
+        path="/musichome"
+        element={
+          <ProtectedRoute>
+            <MusicWrapper>
+              <MusicPlayerHome />
+            </MusicWrapper>
+          </ProtectedRoute>
+        }
+      />
+      {/* ---------- Admin ---------- */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute requireAdmin>
+            <SongManagement />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/eeg"
+        element={
+          <ProtectedRoute>
+            <EEGDetectionPage />
+          </ProtectedRoute>
+        }
+      />
+
+     
 
       {/* ---------- Fallback ---------- */}
       <Route path="/" element={<Navigate to="/login" replace />} />
@@ -104,8 +185,11 @@ function AppRoutes() {
 ======================= */
 
 function App() {
+  console.log('App mounted - pathname:', window.location.pathname);
   return (
     <Router>
+      {/* Visible debug badge (remove after diagnosing) */}
+      <div className="fixed top-3 right-3 bg-black text-white text-xs px-2 py-1 rounded z-50">DEBUG: App running</div>
       <AuthProvider>
         <AppRoutes />
       </AuthProvider>
