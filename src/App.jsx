@@ -1,14 +1,20 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 
 /* 🔹 Public & User Pages */
-import LoginPage from './components/user/LoginPage';
-import LandingPage from './components/user/LandingPage';
-import Profile from './components/user/Profile';
-import ProfileSettings from './components/user/ProfileSettings';
+import LoginPage from "./components/user/LoginPage";
+import LandingPage from "./components/user/LandingPage";
+import FaceDetectionPage from "./pages/faceDetectionPage";
+
+import Profile from "./components/user/Profile";
+import ProfileSettings from "./components/user/ProfileSettings";
 
 /* 🔹 Admin Pages */
-
 
 /* =========================
    ROUTE GUARDS
@@ -18,14 +24,18 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        Loading...
+      </div>
+    );
   }
 
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  if (requireAdmin && user.role !== 'admin') {
+  if (requireAdmin && user.role !== "admin") {
     return <Navigate to="/landing" replace />;
   }
 
@@ -36,13 +46,19 @@ const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        Loading...
+      </div>
+    );
   }
 
   if (user) {
-    return user.role === 'admin'
-      ? <Navigate to="/admin" replace />
-      : <Navigate to="/landing" replace />;
+    return user.role === "admin" ? (
+      <Navigate to="/admin" replace />
+    ) : (
+      <Navigate to="/landing" replace />
+    );
   }
 
   return children;
@@ -70,6 +86,15 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <LandingPage />
+          </ProtectedRoute>
+        }
+      />
+ {/* ---------- FAce main page route ---------- */}
+      <Route
+        path="/face"
+        element={
+          <ProtectedRoute>
+            <FaceDetectionPage />
           </ProtectedRoute>
         }
       />
