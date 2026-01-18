@@ -6,15 +6,29 @@ import {
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
-/* 🔹 Public & User Pages */
-import LoginPage from "./components/user/LoginPage";
-import LandingPage from "./components/user/LandingPage";
+
+/*  Public & User Pages */
+import LoginPage from './components/user/LoginPage';
+import LandingPage from './components/user/LandingPage';
+import Profile from './components/user/Profile';
+import ProfileSettings from './components/user/ProfileSettings';
+
+/*  Admin Pages */
+import SongManagement from './components/admin/music/SongManagement';
+
+
+/*  Music */
+import MusicWrapper from './components/music/MusicWrapper';
+import MusicPlayerHome from './components/music/MusicPlayerHome';
+
+
+ 
 import FaceDetectionPage from "./pages/faceDetectionPage";
 
-import Profile from "./components/user/Profile";
-import ProfileSettings from "./components/user/ProfileSettings";
+ 
 
-/* 🔹 Admin Pages */
+
+
 
 /* =========================
    ROUTE GUARDS
@@ -113,6 +127,26 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <ProfileSettings />
+          </ProtectedRoute>
+        }
+      />
+       {/* ----------  MUSIC PLAYER  ---------- */}
+      <Route
+        path="/musichome"
+        element={
+          <ProtectedRoute>
+            <MusicWrapper>
+              <MusicPlayerHome />
+            </MusicWrapper>
+          </ProtectedRoute>
+        }
+      />
+      {/* ---------- Admin ---------- */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute requireAdmin>
+            <SongManagement />
           </ProtectedRoute>
         }
       />
