@@ -12,7 +12,9 @@ import Profile from "./components/user/Profile";
 import ProfileSettings from "./components/user/ProfileSettings";
 import VoicePage from "./pages/VoicePage";
 import EEGDetectionPage from "./pages/EEGDetectionPage";
-import FaceDetectionPage from "./pages/faceDetectionPage"; // keep this path as-is (case sensitive in some OS)
+
+/* ✅ ONLY FACE PAGE (Simulator) */
+import EmotionSimulatorPage from "./pages/EmotionSimulatorPage";
 
 /* Admin */
 import SongManagement from "./components/admin/music/SongManagement";
@@ -66,11 +68,7 @@ const RootRedirect = () => {
   if (loading) return <FullScreenLoader />;
   if (!user) return <Navigate to="/login" replace />;
 
-  return user.role === "admin" ? (
-    <Navigate to="/admin" replace />
-  ) : (
-    <Navigate to="/landing" replace />
-  );
+  return user.role === "admin" ? <Navigate to="/admin" replace /> : <Navigate to="/landing" replace />;
 };
 
 /* =========================
@@ -102,14 +100,19 @@ function AppRoutes() {
         }
       />
 
+      {/* ✅ SINGLE SOURCE OF TRUTH: Simulator */}
       <Route
-        path="/face"
+        path="/emotion-simulator"
         element={
           <ProtectedRoute>
-            <FaceDetectionPage />
+            <EmotionSimulatorPage />
           </ProtectedRoute>
         }
       />
+
+      {/* ✅ Redirect old paths to simulator (no broken links) */}
+      <Route path="/emotion-tracking" element={<Navigate to="/emotion-simulator" replace />} />
+      <Route path="/face" element={<Navigate to="/emotion-simulator" replace />} />
 
       <Route
         path="/profile"
@@ -129,7 +132,6 @@ function AppRoutes() {
         }
       />
 
-      {/* Keep your existing path + add a clean alias */}
       <Route
         path="/pages/VoicePage"
         element={

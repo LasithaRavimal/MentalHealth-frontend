@@ -48,17 +48,13 @@ export default function EmotionSimulatorPage() {
               <h1 className="text-4xl font-bold md:text-5xl">
                 Student Session <span className="text-spotify-green">Simulator</span>
               </h1>
-              <p className="max-w-3xl mt-2 text-text-gray">
-                Student does activities while tracking runs in the background (better than staring at the camera).
-              </p>
+              <p className="max-w-3xl text-text-gray">
+  Do the activity while the system tracks emotions in the background. This reduces “camera staring”
+  and improves signal quality for university sessions.
+</p>
             </div>
 
-            <button
-              onClick={() => navigate("/emotion-tracking")}
-              className="px-4 py-2 border rounded-full w-fit border-spotify-gray bg-spotify-dark-gray/60 hover:bg-spotify-dark-gray"
-            >
-              Open Dashboard →
-            </button>
+          
           </div>
 
           <div className="flex items-center gap-2 text-sm text-text-gray">

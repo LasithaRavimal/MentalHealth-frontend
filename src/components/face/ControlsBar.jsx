@@ -25,7 +25,8 @@ export default function ControlsBar({
         <div className="min-w-[280px]">
           <div className="text-sm text-text-gray">Session Controls</div>
           <div className="mt-1 text-xs text-text-gray">
-            Sampling: ~{Math.round(captureIntervalMs / 100) / 10}s • Duration: {durationMinutes} min
+            Sampling: ~{Math.round(captureIntervalMs / 100) / 10}s • Duration:{" "}
+            {durationMinutes} min
           </div>
         </div>
 
@@ -34,7 +35,7 @@ export default function ControlsBar({
           <select
             value={durationMinutes}
             onChange={(e) => onDurationChange(Number(e.target.value))}
-            className={`${pillBase} ${sessionActive ? pillDisabled : ""}`}
+            className="px-4 py-3 text-sm text-white border rounded-full bg-spotify-dark-gray/60 border-spotify-gray"
             disabled={sessionActive}
             title="Session duration"
           >
@@ -63,7 +64,9 @@ export default function ControlsBar({
               onClick={onStartCamera}
               className="inline-flex items-center gap-2 px-5 py-3 font-semibold text-white transition rounded-full bg-spotify-green hover:bg-spotify-green-hover disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={modelReady === false}
-              title={modelReady === false ? "Model is not loaded" : "Start camera"}
+              title={
+                modelReady === false ? "Model is not loaded" : "Start camera"
+              }
             >
               <MdCameraAlt className="text-xl" />
               Start Camera
@@ -75,7 +78,11 @@ export default function ControlsBar({
                   onClick={onStartSession}
                   className="inline-flex items-center gap-2 px-5 py-3 font-semibold text-white transition rounded-full bg-spotify-green hover:bg-spotify-green-hover disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={modelReady === false}
-                  title={modelReady === false ? "Model is not loaded" : "Start session"}
+                  title={
+                    modelReady === false
+                      ? "Model is not loaded"
+                      : "Start session"
+                  }
                 >
                   <MdPlayArrow className="text-2xl" />
                   Start Session
