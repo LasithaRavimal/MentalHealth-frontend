@@ -1,7 +1,7 @@
 // App.jsx
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import FaceWeeklyTrackingPage from "./pages/FaceWeeklyTrackingPage";
+
 
 
 /* =========================
@@ -101,14 +101,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route
-  path="/facehistory"
-  element={
-    <ProtectedRoute>
-      <FaceWeeklyTrackingPage />
-    </ProtectedRoute>
-  }
-/>
+
 
 
       {/* ✅ SINGLE SOURCE OF TRUTH: Simulator */}
