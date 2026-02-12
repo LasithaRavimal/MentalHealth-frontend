@@ -4,7 +4,7 @@ import TopBar from './PlayerTopBar';
 import SongCard from './songs/SongCard';
 import PlayerBar from './player/PlayerBar';
 import apiClient from '../../api/apiClient';
-import { usePlayer } from '../admin/music/context/PlayerContext';
+import { usePlayer } from '../music/context/PlayerContext';
 import { MdSearch, MdMusicNote } from 'react-icons/md';
 
 const SearchPage = () => {

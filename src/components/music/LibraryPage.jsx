@@ -7,7 +7,7 @@ import PlaylistCard from './playlist/PlaylistCard';
 import PlayerBar from './player/PlayerBar';
 import PlaylistModal from './playlist/PlaylistModal';
 import apiClient from '../../api/apiClient';
-import { usePlayer } from '../admin/music/context/PlayerContext';
+import { usePlayer } from '../music/context/PlayerContext';
 import { MdLibraryMusic, MdPlaylistPlay, MdSearch, MdFavorite, MdFavoriteBorder } from 'react-icons/md';
 
 const LibraryPage = () => {

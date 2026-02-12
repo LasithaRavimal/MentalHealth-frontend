@@ -5,7 +5,7 @@ import TopBar from './PlayerTopBar';
 import PlayerBar from './player/PlayerBar';
 import apiClient from '../../api/apiClient';
 import { useAuth } from '../../context/AuthContext';
-import { usePlayer } from '../admin/music/context/PlayerContext';
+import { usePlayer } from '../music/context/PlayerContext';
 import { MdArrowBack, MdCheckCircle, MdWarning, MdError, MdCalendarToday, MdAccessTime } from 'react-icons/md';
 
 const SessionHistoryPage = () => {
