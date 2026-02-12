@@ -20,7 +20,13 @@ import SongManagement from "./components/admin/music/SongManagement";
 /* Music */
 import MusicWrapper from "./components/music/MusicWrapper";
 import MusicPlayerHome from "./components/music/MusicPlayerHome";
-
+import MusicProfile from './components/user/MusicProfile';
+import MusicProfileSettings from './components/user/MusicProfileSettings';
+import SearchPage from './components/music/SearchPage';
+import LibraryPage from './components/music/LibraryPage';
+import PlaylistPage from './components/music/playlist/PlaylistPage';
+import CategoryPage from './components/music/CategoryPage';
+import SessionHistoryPage from './components/music/SessionHistoryPage';
 /* =========================
    SHARED UI
 ========================= */
@@ -163,6 +169,81 @@ function AppRoutes() {
           <ProtectedRoute>
             <MusicWrapper>
               <MusicPlayerHome />
+            </MusicWrapper>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/search"
+        element={
+          <ProtectedRoute>
+            <MusicWrapper>
+              <SearchPage />
+            </MusicWrapper>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/library"
+        element={
+          <ProtectedRoute>
+            <MusicWrapper>
+              <LibraryPage />
+            </MusicWrapper>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/playlist/:id"
+        element={
+          <ProtectedRoute>
+            <MusicWrapper>
+              <PlaylistPage />
+            </MusicWrapper>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/category/:categoryName"
+        element={
+          <ProtectedRoute>
+            <MusicWrapper>
+              <CategoryPage />
+            </MusicWrapper>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/sessions"
+        element={
+          <ProtectedRoute>
+            <MusicWrapper>
+              <SessionHistoryPage />
+            </MusicWrapper>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile-musicprofile"
+        element={
+          <ProtectedRoute>
+             <MusicWrapper>
+            <MusicProfile />
+            </MusicWrapper>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/musicprofile-settings"
+        element={
+          <ProtectedRoute>
+            <MusicWrapper>
+            <MusicProfileSettings />
             </MusicWrapper>
           </ProtectedRoute>
         }
