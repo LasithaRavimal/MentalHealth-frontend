@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-//import PlaylistCard from './PlaylistCard';
-//import PlaylistModal from './PlaylistModal';
+import PlaylistCard from './PlaylistCard';
+import PlaylistModal from './PlaylistModal';
 import apiClient from '../../../api/apiClient';
 
 const PlaylistList = () => {
@@ -92,7 +92,7 @@ const PlaylistList = () => {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
           {playlists.map((playlist) => (
             <div key={playlist.id} className="relative group">
-              {/* //<PlaylistCard playlist={playlist} showAddButton={true} /> */}
+              <PlaylistCard playlist={playlist} showAddButton={true} />
               <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
                 <button
                   onClick={(e) => {
@@ -118,7 +118,7 @@ const PlaylistList = () => {
         </div>
       )}
 
-      {/* <PlaylistModal
+      <PlaylistModal
         isOpen={showModal}
         onClose={() => {
           setShowModal(false);
@@ -126,7 +126,7 @@ const PlaylistList = () => {
         }}
         onSuccess={handleModalSuccess}
         playlist={editingPlaylist}
-      /> */}
+      />
     </div>
   );
 };
