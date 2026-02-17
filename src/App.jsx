@@ -27,6 +27,8 @@ import LibraryPage from './components/music/LibraryPage';
 import PlaylistPage from './components/music/playlist/PlaylistPage';
 import CategoryPage from './components/music/CategoryPage';
 import SessionHistoryPage from './components/music/SessionHistoryPage';
+import WeeklyAnalysisPage from './components/music/WeeklyAnalysisPage';
+
 /* =========================
    SHARED UI
 ========================= */
@@ -248,6 +250,17 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+  path="/weekly-analysis"
+  element={
+    <ProtectedRoute>
+      <MusicWrapper>
+        <WeeklyAnalysisPage />
+      </MusicWrapper>
+    </ProtectedRoute>
+  }
+/>
+
 
       {/* ---------- Admin ---------- */}
       <Route
