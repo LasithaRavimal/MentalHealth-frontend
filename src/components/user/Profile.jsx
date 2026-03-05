@@ -101,7 +101,7 @@ const Profile = () => {
               </button>
 
               <button
-                onClick={() => navigate('/musichistory')}
+                onClick={() => navigate('/weekly-analysis')}
                 className="flex flex-col items-center justify-center gap-3 p-6 rounded-xl bg-spotify-light-gray/20 hover:bg-spotify-light-gray/40 transition-colors border border-white/5"
               >
                 <MdMusicNote className="w-8 h-8 text-spotify-green" />

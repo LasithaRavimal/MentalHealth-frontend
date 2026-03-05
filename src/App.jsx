@@ -196,6 +196,16 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/playlist/:id"
+        element={
+          <ProtectedRoute>
+            <MusicWrapper>
+              <PlaylistPage />
+            </MusicWrapper>
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         path="/playlist/:id"
@@ -250,7 +260,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route
+         <Route
   path="/weekly-analysis"
   element={
     <ProtectedRoute>

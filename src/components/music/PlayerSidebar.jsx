@@ -74,7 +74,7 @@ const Sidebar = () => {
     { path: '/weekly-analysis', icon: MdAnalytics, label: 'Weekly Analysis' },
     { path: '/search', icon: MdSearch, label: 'Search' },
     { path: '/library', icon: MdLibraryMusic, label: 'Your Library' },
-    { path: '/playlists', icon: MdPlaylistPlay, label: 'Playlists' },
+   // { path: '/playlists', icon: MdPlaylistPlay, label: 'Playlists' },
   ];
 
   const adminMenuItems = [
