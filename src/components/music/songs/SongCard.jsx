@@ -141,7 +141,7 @@ const SongCard = ({ song, onPlay, showAddButton = true }) => {
           onClose={() => setShowAddModal(false)}
           songId={song.id}
           onSuccess={() => {
-            // Optionally reload playlists or update UI
+            // Optionally reload playlists  
           }}
         />
       )}
