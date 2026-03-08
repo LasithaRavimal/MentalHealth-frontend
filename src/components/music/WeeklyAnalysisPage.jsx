@@ -12,6 +12,9 @@ import {
   Legend,
 } from "recharts";
 
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
 const WeeklyAnalysisPage = () => {
 
   const [monthlyData, setMonthlyData] = useState({});
@@ -50,9 +53,6 @@ const WeeklyAnalysisPage = () => {
 
       const groupedByMonth = {};
 
-      // --------------------------------
-      // 1️⃣ Group sessions by month
-      // --------------------------------
       sessions.forEach((session) => {
 
         if (!session.started_at) return;
@@ -74,9 +74,6 @@ const WeeklyAnalysisPage = () => {
 
       const finalResult = {};
 
-      // --------------------------------
-      // 2️⃣ Weekly weighted calculation
-      // --------------------------------
       Object.keys(groupedByMonth).forEach((month) => {
 
         const sessionsInMonth = groupedByMonth[month];
@@ -103,9 +100,6 @@ const WeeklyAnalysisPage = () => {
 
           if (!stress || !depression) return;
 
-          // --------------------------------
-          // Balanced weighted probability
-          // --------------------------------
           const stressScore =
             (stress.high || 0) +
             (stress.moderate || 0) * 0.5;
@@ -120,9 +114,6 @@ const WeeklyAnalysisPage = () => {
 
         });
 
-        // --------------------------------
-        // 3️⃣ Calculate weekly averages
-        // --------------------------------
         finalResult[month] = Object.keys(weeks).map((week) => {
 
           const data = weeks[week];
@@ -153,6 +144,44 @@ const WeeklyAnalysisPage = () => {
     }
   };
 
+  // -------------------------
+  // Generate PDF Report
+  // -------------------------
+  const generateReport = () => {
+
+    const doc = new jsPDF();
+
+    doc.setFontSize(18);
+    doc.text("M_Track Weekly Mental Health Report-Music", 14, 20);
+
+    let startY = 30;
+
+    Object.keys(monthlyData).forEach((month) => {
+
+      doc.setFontSize(14);
+      doc.text(month, 14, startY);
+
+      const rows = monthlyData[month].map((w) => [
+        `Week ${w.week}`,
+        w.sessions,
+        `${w.stress} (${w.stressScore})`,
+        `${w.depression} (${w.depressionScore})`
+      ]);
+
+      autoTable(doc, {
+        startY: startY + 5,
+        head: [["Week", "Sessions", "Stress", "Depression"]],
+        body: rows
+      });
+
+      startY = doc.lastAutoTable.finalY + 15;
+
+    });
+
+    doc.save("MTrack_Weekly_Report.pdf");
+
+  };
+
   return (
     <div className="flex h-screen bg-spotify-black">
 
@@ -160,9 +189,20 @@ const WeeklyAnalysisPage = () => {
 
       <div className="flex-1 p-10 text-white overflow-y-auto">
 
-        <h1 className="text-4xl font-bold mb-3">
-          Weekly Mental Health Trends
-        </h1>
+        <div className="flex justify-between items-center mb-6">
+
+          <h1 className="text-4xl font-bold">
+            Weekly Mental Health Trends
+          </h1>
+
+          <button
+            onClick={generateReport}
+            className="bg-green-600 px-5 py-2 rounded-lg hover:bg-green-700"
+          >
+            Download Report
+          </button>
+
+        </div>
 
         <p className="text-text-gray mb-10">
           Scientific weighted probability based emotional aggregation
@@ -176,7 +216,7 @@ const WeeklyAnalysisPage = () => {
               {month}
             </h2>
 
-            {/* ================= TABLE ================= */}
+            {/* TABLE */}
 
             <div className="bg-spotify-light-gray rounded-2xl shadow-xl overflow-hidden mb-8">
 
@@ -228,7 +268,7 @@ const WeeklyAnalysisPage = () => {
 
             </div>
 
-            {/* ================= CHART ================= */}
+            {/* CHART */}
 
             <div className="bg-spotify-light-gray rounded-2xl p-6 shadow-lg">
 
@@ -262,7 +302,6 @@ const WeeklyAnalysisPage = () => {
                   />
 
                   <Tooltip />
-
                   <Legend />
 
                   <Line
