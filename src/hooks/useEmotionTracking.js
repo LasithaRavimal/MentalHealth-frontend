@@ -17,9 +17,12 @@ const defaultIntervalForDuration = (durationSeconds) => {
 
 const buildPercentages = (counts, total) => {
   const out = {};
-  EMOTIONS.forEach((emotion) => {
-    out[emotion] = total > 0 ? Math.round(((counts[emotion] || 0) / total) * 100) : 0;
+
+  Object.keys(counts || {}).forEach((emotion) => {
+    const normalizedKey = String(emotion).toLowerCase();
+    out[normalizedKey] = total > 0 ? Math.round(((counts[emotion] || 0) / total) * 100) : 0;
   });
+
   return out;
 };
 

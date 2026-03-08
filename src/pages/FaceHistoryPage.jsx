@@ -3,22 +3,43 @@ import { useNavigate } from "react-router-dom";
 import { MdArrowBack, MdCalendarToday, MdInsights, MdMood, MdTimeline } from "react-icons/md";
 import { getMyFaceEmotionHistory } from "../api/faceHistoryApi";
 
-const prettyEmotion = (value) => value || "—";
+const prettyEmotion = (value) => {
+  if (!value) return "—";
+  const normalized = String(value).toLowerCase();
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+};
 
 const getEmotionColor = (emotion) => {
+  const key = String(emotion || "").toLowerCase();
+
   const map = {
-    Happy: "text-green-400",
-    Sad: "text-blue-400",
-    Angry: "text-red-400",
-    Fear: "text-yellow-300",
+    happy: "text-green-400",
+    sad: "text-blue-400",
+    angry: "text-red-400",
+    fear: "text-yellow-300",
   };
-  return map[emotion] || "text-white";
+
+  return map[key] || "text-white";
+};
+
+const getPct = (session, key) => {
+  const percentages = session?.emotion_percentages || {};
+  return (
+    percentages[key] ??
+    percentages[key.toLowerCase()] ??
+    percentages[key.charAt(0).toUpperCase() + key.slice(1)] ??
+    0
+  );
 };
 
 export default function FaceHistoryPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [history, setHistory] = useState({ sessions: [], total: 0, weekly_summary: { days: [] } });
+  const [history, setHistory] = useState({
+    sessions: [],
+    total: 0,
+    weekly_summary: { days: [], total_sessions_this_week: 0, overall_weekly_emotion: null },
+  });
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -30,7 +51,13 @@ export default function FaceHistoryPage() {
       setLoading(true);
       setError("");
       const data = await getMyFaceEmotionHistory();
-      setHistory(data);
+      setHistory(
+        data || {
+          sessions: [],
+          total: 0,
+          weekly_summary: { days: [], total_sessions_this_week: 0, overall_weekly_emotion: null },
+        }
+      );
     } catch (e) {
       setError(e?.response?.data?.detail || "Failed to load face emotion history");
     } finally {
@@ -98,7 +125,11 @@ export default function FaceHistoryPage() {
                   <div className="text-sm text-text-gray">Weekly top emotion</div>
                   <MdMood className="text-2xl text-spotify-green" />
                 </div>
-                <div className={`mt-3 text-3xl font-bold ${getEmotionColor(history?.weekly_summary?.overall_weekly_emotion)}`}>
+                <div
+                  className={`mt-3 text-3xl font-bold ${getEmotionColor(
+                    history?.weekly_summary?.overall_weekly_emotion
+                  )}`}
+                >
                   {prettyEmotion(history?.weekly_summary?.overall_weekly_emotion)}
                 </div>
               </div>
@@ -116,7 +147,8 @@ export default function FaceHistoryPage() {
                 ) : (
                   <div className="space-y-3">
                     <div className="text-text-gray">
-                      Sessions today: <span className="font-semibold text-white">{todaySummary.sessions}</span>
+                      Sessions today:{" "}
+                      <span className="font-semibold text-white">{todaySummary.sessions}</span>
                     </div>
                     <div className="text-text-gray">
                       Dominant daily emotion:{" "}
@@ -171,8 +203,12 @@ export default function FaceHistoryPage() {
                           <div className="text-sm text-text-gray">
                             {new Date(session.created_at).toLocaleString()}
                           </div>
-                          <div className={`mt-1 text-2xl font-bold ${getEmotionColor(session.dominant_emotion)}`}>
-                            {session.dominant_emotion}
+                          <div
+                            className={`mt-1 text-2xl font-bold ${getEmotionColor(
+                              session.dominant_emotion
+                            )}`}
+                          >
+                            {prettyEmotion(session.dominant_emotion)}
                           </div>
                         </div>
 
@@ -183,15 +219,21 @@ export default function FaceHistoryPage() {
                           </div>
                           <div>
                             <div className="text-text-gray">Duration</div>
-                            <div className="font-semibold text-white">{Math.round(session.duration_seconds / 60)} min</div>
+                            <div className="font-semibold text-white">
+                              {Math.round(session.duration_seconds / 60)} min
+                            </div>
                           </div>
                           <div>
                             <div className="text-text-gray">Happy</div>
-                            <div className="font-semibold text-white">{session.emotion_percentages?.Happy || 0}%</div>
+                            <div className="font-semibold text-white">
+                              {getPct(session, "happy")}%
+                            </div>
                           </div>
                           <div>
                             <div className="text-text-gray">Sad</div>
-                            <div className="font-semibold text-white">{session.emotion_percentages?.Sad || 0}%</div>
+                            <div className="font-semibold text-white">
+                              {getPct(session, "sad")}%
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -199,19 +241,27 @@ export default function FaceHistoryPage() {
                       <div className="grid grid-cols-2 gap-3 mt-4 text-sm md:grid-cols-4">
                         <div className="p-3 rounded-lg bg-white/5">
                           <div className="text-text-gray">Angry</div>
-                          <div className="font-semibold text-white">{session.emotion_percentages?.Angry || 0}%</div>
+                          <div className="font-semibold text-white">
+                            {getPct(session, "angry")}%
+                          </div>
                         </div>
                         <div className="p-3 rounded-lg bg-white/5">
                           <div className="text-text-gray">Fear</div>
-                          <div className="font-semibold text-white">{session.emotion_percentages?.Fear || 0}%</div>
+                          <div className="font-semibold text-white">
+                            {getPct(session, "fear")}%
+                          </div>
                         </div>
                         <div className="p-3 rounded-lg bg-white/5">
                           <div className="text-text-gray">Happy</div>
-                          <div className="font-semibold text-white">{session.emotion_percentages?.Happy || 0}%</div>
+                          <div className="font-semibold text-white">
+                            {getPct(session, "happy")}%
+                          </div>
                         </div>
                         <div className="p-3 rounded-lg bg-white/5">
                           <div className="text-text-gray">Sad</div>
-                          <div className="font-semibold text-white">{session.emotion_percentages?.Sad || 0}%</div>
+                          <div className="font-semibold text-white">
+                            {getPct(session, "sad")}%
+                          </div>
                         </div>
                       </div>
                     </div>
