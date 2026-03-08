@@ -10,3 +10,5 @@ export const predictEEG = (file) => {
     headers: { "Content-Type": "multipart/form-data" },
   });
 };
+
+

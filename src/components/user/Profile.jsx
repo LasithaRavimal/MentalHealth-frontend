@@ -1,4 +1,4 @@
-// frontend/src/components/Profile.jsx
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -31,23 +31,23 @@ const Profile = () => {
 
   return (
     
-      <div className="flex-1 overflow-y-auto p-8 pb-48 mb-24 bg-gradient-to-b from-spotify-dark-gray to-spotify-black min-h-screen">
+      <div className="flex-1 min-h-screen p-8 pb-48 mb-24 overflow-y-auto bg-gradient-to-b from-spotify-dark-gray to-spotify-black">
         {loading ? (
           <div className="flex items-center justify-center py-32">
-            <div className="w-16 h-16 border-4 border-spotify-green border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-16 h-16 border-4 rounded-full border-spotify-green border-t-transparent animate-spin"></div>
           </div>
         ) : (
           <>
             {/* Header */}
             <div className="mb-8">
-              <h1 className="text-4xl font-bold text-white mb-2">Profile</h1>
+              <h1 className="mb-2 text-4xl font-bold text-white">Profile</h1>
               <p className="text-text-gray">Your account details and detection methods</p>
             </div>
 
             {/* User Info Card */}
-            <div className="bg-gradient-to-br from-spotify-light-gray to-spotify-gray rounded-lg p-8 mb-8 shadow-xl border border-spotify-gray animate-fade-in">
+            <div className="p-8 mb-8 border rounded-lg shadow-xl bg-gradient-to-br from-spotify-light-gray to-spotify-gray border-spotify-gray animate-fade-in">
               <div className="flex items-start gap-6">
-                <div className="w-24 h-24 bg-gradient-to-br from-spotify-green to-green-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">
+                <div className="flex items-center justify-center w-24 h-24 text-3xl font-bold text-white rounded-full shadow-lg bg-gradient-to-br from-spotify-green to-green-600">
                   {user?.email?.[0]?.toUpperCase() || 'U'}
                 </div>
                 <div className="flex-1">
@@ -57,7 +57,7 @@ const Profile = () => {
                   </div>
                   <div className="flex items-center gap-3 mb-2">
                     <MdPerson className="text-lg text-text-gray" />
-                    <span className="text-text-gray capitalize">{user?.role || 'User'} Account</span>
+                    <span className="capitalize text-text-gray">{user?.role || 'User'} Account</span>
                   </div>
                   {registrationDate && (
                     <div className="flex items-center gap-3">
@@ -72,41 +72,41 @@ const Profile = () => {
             </div>
 
             {/* Method Buttons (EEG / Face / Voice / Music) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 gap-6 mb-8 sm:grid-cols-2 lg:grid-cols-4">
               <button
                 onClick={() => navigate('/eeghistory')}
-                className="flex flex-col items-center justify-center gap-3 p-6 rounded-xl bg-spotify-light-gray/20 hover:bg-spotify-light-gray/40 transition-colors border border-white/5"
+                className="flex flex-col items-center justify-center gap-3 p-6 transition-colors border rounded-xl bg-spotify-light-gray/20 hover:bg-spotify-light-gray/40 border-white/5"
               >
                 <MdHearing className="w-8 h-8 text-spotify-green" />
-                <span className="text-white font-semibold">EEG</span>
-                <span className="text-text-gray text-sm">EEG-based detection</span>
+                <span className="font-semibold text-white">EEG</span>
+                <span className="text-sm text-text-gray">EEG-based detection</span>
               </button>
 
               <button
                 onClick={() => navigate('/facehistory')}
-                className="flex flex-col items-center justify-center gap-3 p-6 rounded-xl bg-spotify-light-gray/20 hover:bg-spotify-light-gray/40 transition-colors border border-white/5"
+                className="flex flex-col items-center justify-center gap-3 p-6 transition-colors border rounded-xl bg-spotify-light-gray/20 hover:bg-spotify-light-gray/40 border-white/5"
               >
                 <MdFace className="w-8 h-8 text-spotify-green" />
-                <span className="text-white font-semibold">Face</span>
-                <span className="text-text-gray text-sm">Face-based detection</span>
+                <span className="font-semibold text-white">Face</span>
+                <span className="text-sm text-text-gray">Face-based detection</span>
               </button>
 
               <button
                 onClick={() => navigate('/voicehistory')}
-                className="flex flex-col items-center justify-center gap-3 p-6 rounded-xl bg-spotify-light-gray/20 hover:bg-spotify-light-gray/40 transition-colors border border-white/5"
+                className="flex flex-col items-center justify-center gap-3 p-6 transition-colors border rounded-xl bg-spotify-light-gray/20 hover:bg-spotify-light-gray/40 border-white/5"
               >
                 <MdMic className="w-8 h-8 text-spotify-green" />
-                <span className="text-white font-semibold">Voice</span>
-                <span className="text-text-gray text-sm">Voice analysis</span>
+                <span className="font-semibold text-white">Voice</span>
+                <span className="text-sm text-text-gray">Voice analysis</span>
               </button>
 
               <button
                 onClick={() => navigate('/musichistory')}
-                className="flex flex-col items-center justify-center gap-3 p-6 rounded-xl bg-spotify-light-gray/20 hover:bg-spotify-light-gray/40 transition-colors border border-white/5"
+                className="flex flex-col items-center justify-center gap-3 p-6 transition-colors border rounded-xl bg-spotify-light-gray/20 hover:bg-spotify-light-gray/40 border-white/5"
               >
                 <MdMusicNote className="w-8 h-8 text-spotify-green" />
-                <span className="text-white font-semibold">Music</span>
-                <span className="text-text-gray text-sm">Open Music Player</span>
+                <span className="font-semibold text-white">Music</span>
+                <span className="text-sm text-text-gray">Open Music Player</span>
               </button>
             </div>
 
