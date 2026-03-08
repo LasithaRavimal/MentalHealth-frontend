@@ -14,6 +14,8 @@ import Profile from "./components/user/Profile";
 import ProfileSettings from "./components/user/ProfileSettings";
 import VoicePage from "./pages/VoicePage";
 import EEGDetectionPage from "./pages/EEGDetectionPage";
+import FaceHistoryPage from "./pages/FaceHistoryPage";
+
 
 /* ✅ ONLY FACE PAGE (Simulator) */
 import EmotionSimulatorPage from "./pages/EmotionSimulatorPage";
@@ -126,6 +128,15 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      <Route
+  path="/facehistory"
+  element={
+    <ProtectedRoute>
+      <FaceHistoryPage />
+    </ProtectedRoute>
+  }
+/>
 
       <Route
         path="/profile-settings"

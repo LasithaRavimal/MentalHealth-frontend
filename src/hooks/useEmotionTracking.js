@@ -1,5 +1,6 @@
 import { useMemo, useRef, useEffect, useState } from "react";
 import apiClient from "../api/apiClient";
+import { saveFaceEmotionSession } from "../api/faceHistoryApi";
 import { EMOTIONS, initCounts, normalizeLabel, normalizeProbabilities } from "../utils/emotionUtils";
 import { isNoFaceBackend, looksCoveredOrBlank } from "../utils/faceUtils";
 
@@ -8,11 +9,33 @@ const NO_FACE_STREAK_SHOW = 2;
 const NO_FACE_STREAK_CLEAR_LATEST = 4;
 
 const defaultIntervalForDuration = (durationSeconds) => {
-  // Backend load guardrails
-  if (durationSeconds >= 3600) return 3000; // 60m
-  if (durationSeconds >= 1800) return 2500; // 30m
-  if (durationSeconds >= 900) return 2000;  // 15m
-  return 1500;                               // 5m
+  if (durationSeconds >= 3600) return 3000;
+  if (durationSeconds >= 1800) return 2500;
+  if (durationSeconds >= 900) return 2000;
+  return 1500;
+};
+
+const buildPercentages = (counts, total) => {
+  const out = {};
+  EMOTIONS.forEach((emotion) => {
+    out[emotion] = total > 0 ? Math.round(((counts[emotion] || 0) / total) * 100) : 0;
+  });
+  return out;
+};
+
+const getDominantEmotion = (counts) => {
+  let maxEmotion = null;
+  let maxCount = -1;
+
+  EMOTIONS.forEach((emotion) => {
+    const value = counts[emotion] || 0;
+    if (value > maxCount) {
+      maxCount = value;
+      maxEmotion = emotion;
+    }
+  });
+
+  return maxEmotion || "Unknown";
 };
 
 export default function useEmotionTracking() {
@@ -30,6 +53,9 @@ export default function useEmotionTracking() {
   const faceDetectorRef = useRef(null);
   const noFaceStreakRef = useRef(0);
 
+  const sessionStartAtRef = useRef(null);
+  const sessionSavedRef = useRef(false);
+
   const [cameraOn, setCameraOn] = useState(false);
   const [status, setStatus] = useState(null);
   const [error, setError] = useState("");
@@ -40,7 +66,6 @@ export default function useEmotionTracking() {
   const [sessionActive, setSessionActive] = useState(false);
   const [sessionEnded, setSessionEnded] = useState(false);
 
-  // ✅ default 15 min, but supports 5/15/30/60
   const [durationSeconds, setDurationSeconds] = useState(15 * 60);
   const [timeLeft, setTimeLeft] = useState(15 * 60);
 
@@ -66,7 +91,6 @@ export default function useEmotionTracking() {
   useEffect(() => {
     try {
       if (typeof window !== "undefined" && "FaceDetector" in window) {
-        // eslint-disable-next-line no-undef
         faceDetectorRef.current = new window.FaceDetector({
           fastMode: true,
           maxDetectedFaces: 1,
@@ -99,7 +123,6 @@ export default function useEmotionTracking() {
     return () => {
       hardStopAll();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const refreshStatus = async () => {
@@ -135,13 +158,37 @@ export default function useEmotionTracking() {
     inFlightRef.current = false;
   };
 
-  const stopSessionInternal = (autoEnded) => {
+  const persistSessionResult = async () => {
+    if (sessionSavedRef.current) return;
+    if (!sessionStartAtRef.current) return;
+    if (totalDetections <= 0) return;
+
+    try {
+      const payload = {
+        dominant_emotion: getDominantEmotion(counts),
+        emotion_counts: counts,
+        emotion_percentages: buildPercentages(counts, totalDetections),
+        total_detections: totalDetections,
+        duration_seconds: durationSeconds,
+        session_started_at: sessionStartAtRef.current,
+        session_ended_at: new Date().toISOString(),
+      };
+
+      await saveFaceEmotionSession(payload);
+      sessionSavedRef.current = true;
+    } catch (e) {
+      console.error("Failed to save face emotion session", e);
+    }
+  };
+
+  const stopSessionInternal = async (autoEnded) => {
     clearTimers();
     sessionActiveRef.current = false;
 
     if (sessionActive || autoEnded) {
       setSessionActive(false);
       setSessionEnded(true);
+      await persistSessionResult();
     } else {
       setSessionActive(false);
     }
@@ -226,6 +273,8 @@ export default function useEmotionTracking() {
     setSessionEnded(false);
     setError("");
     clearNoFaceState();
+    sessionStartAtRef.current = null;
+    sessionSavedRef.current = false;
   };
 
   const restartSession = () => {
@@ -253,14 +302,10 @@ export default function useEmotionTracking() {
       try {
         const faces = await fd.detect(canvas);
         return Array.isArray(faces) && faces.length > 0;
-      } catch {
-        // fallback below
-      }
+      } catch {}
     }
 
     if (looksCoveredOrBlank(canvas)) return false;
-
-    // Can't reliably detect face without a model; let backend decide.
     return true;
   };
 
@@ -279,6 +324,8 @@ export default function useEmotionTracking() {
 
     clearNoFaceState();
     noFaceStreakRef.current = 0;
+    sessionSavedRef.current = false;
+    sessionStartAtRef.current = new Date().toISOString();
 
     sessionActiveRef.current = true;
     setSessionActive(true);
