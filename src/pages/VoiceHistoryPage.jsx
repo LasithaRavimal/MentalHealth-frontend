@@ -388,7 +388,7 @@ const VoiceHistoryPage = () => {
                       </div>
                       <div className="text-2xl font-bold text-red-400">
                         {normalizedTrend?.avgDepression != null
-                          ? `${(normalizedTrend.avgDepression * 100).toFixed(0)}%`
+                          ? `${(normalizedTrend.avgStress * 100).toFixed(0)}%`
                           : "--"}
                       </div>
                     </div>
@@ -398,7 +398,7 @@ const VoiceHistoryPage = () => {
                       </div>
                       <div className="text-2xl font-bold text-orange-400">
                         {normalizedTrend?.avgStress != null
-                          ? `${(normalizedTrend.avgStress * 100).toFixed(0)}%`
+                          ? `${(normalizedTrend.avgDepression * 100).toFixed(0)}%`
                           : "--"}
                       </div>
                     </div>
