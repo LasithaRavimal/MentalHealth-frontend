@@ -13,7 +13,10 @@ import ProfileSettings from "./components/user/ProfileSettings";
 import VoicePage from "./pages/VoicePage";
 import EEGDetectionPage from "./pages/EEGDetectionPage";
 import FaceDetectionPage from "./pages/faceDetectionPage"; // keep this path as-is (case sensitive in some OS)
+
+/*voice*/
 import VoiceHistoryPage from "./pages/VoiceHistoryPage";
+import MentalHealthResourcesPage from './pages/MentalHealthResourcesPage';
 
 /* Admin */
 import SongManagement from "./components/admin/music/SongManagement";
@@ -130,7 +133,7 @@ function AppRoutes() {
         }
       />
 
-      {/* Keep your existing path + add a clean alias */}
+      {/* voice routes */}
       <Route
         path="/pages/VoicePage"
         element={
@@ -161,6 +164,15 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <VoiceHistoryPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/mentalhealthresources"
+        element={
+          <ProtectedRoute>  
+            <MentalHealthResourcesPage />
           </ProtectedRoute>
         }
       />

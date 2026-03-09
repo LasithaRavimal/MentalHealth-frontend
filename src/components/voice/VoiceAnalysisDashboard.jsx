@@ -45,12 +45,7 @@ const VoiceAnalysisDashboard = () => {
   return (
     <div className="max-w-4xl mx-auto relative">
       <div className="absolute -top-16 right-0">
-        <button
-          onClick={() => navigate('/voice/history')}
-          className="px-6 py-2 bg-spotify-gray hover:bg-spotify-light-gray text-text-white font-semibold rounded-full transition-colors flex items-center shadow-lg"
-        >
-          <span className="mr-2">🕒</span> View History
-        </button>
+        
       </div>
       {/* Input Section - Only show if not loading and no results */}
       {!loading && !results && (
