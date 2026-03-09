@@ -104,6 +104,14 @@ const Profile = () => {
               <span className="text-sm text-text-gray">EEG-based detection</span>
             </button>
 
+              <button
+                onClick={() => navigate('/voicehistorypage')}
+                className="flex flex-col items-center justify-center gap-3 p-6 rounded-xl bg-spotify-light-gray/20 hover:bg-spotify-light-gray/40 transition-colors border border-white/5"
+              >
+                <MdMic className="w-8 h-8 text-spotify-green" />
+                <span className="text-white font-semibold">Voice</span>
+                <span className="text-text-gray text-sm">Voice analysis</span>
+              </button>
             <button
               onClick={() => navigate('/facehistory')}
               className="flex flex-col items-center justify-center gap-3 p-6 transition-colors border rounded-xl bg-spotify-light-gray/20 hover:bg-spotify-light-gray/40 border-white/5"

@@ -20,6 +20,10 @@ import FaceHistoryPage from "./pages/FaceHistoryPage";
 /* ✅ ONLY FACE PAGE (Simulator) */
 import EmotionSimulatorPage from "./pages/EmotionSimulatorPage";
 
+/*voice*/
+import VoiceHistoryPage from "./pages/VoiceHistoryPage";
+import MentalHealthResourcesPage from './pages/MentalHealthResourcesPage';
+
 /* Admin */
 import SongManagement from "./components/admin/music/SongManagement";
 
@@ -155,6 +159,7 @@ function AppRoutes() {
         }
       />
 
+      {/* voice routes */}
       <Route
         path="/pages/VoicePage"
         element={
@@ -168,6 +173,32 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <VoicePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/voice/history"
+        element={
+          <ProtectedRoute>
+            <VoiceHistoryPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/voicehistorypage"
+        element={
+          <ProtectedRoute>
+            <VoiceHistoryPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/mentalhealthresources"
+        element={
+          <ProtectedRoute>  
+            <MentalHealthResourcesPage />
           </ProtectedRoute>
         }
       />
