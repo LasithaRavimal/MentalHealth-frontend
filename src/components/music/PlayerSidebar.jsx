@@ -71,9 +71,10 @@ const Sidebar = () => {
   const userMenuItems = [
     { path: '/landing', icon: MdHome, label: 'Back to Home' },
     { path: '/musichome', icon: MdHome, label: 'MusicPlayerHome' },
+    { path: '/weekly-analysis', icon: MdAnalytics, label: 'Weekly Analysis' },
     { path: '/search', icon: MdSearch, label: 'Search' },
     { path: '/library', icon: MdLibraryMusic, label: 'Your Library' },
-    { path: '/playlists', icon: MdPlaylistPlay, label: 'Playlists' },
+   // { path: '/playlists', icon: MdPlaylistPlay, label: 'Playlists' },
   ];
 
   const adminMenuItems = [

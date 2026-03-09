@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { MdAdd, MdPlayArrow, MdPause, MdFavorite, MdFavoriteBorder } from 'react-icons/md';
-//import AddToPlaylistModal from '../playlist/AddToPlaylistModal';
+import AddToPlaylistModal from '../playlist/AddToPlaylistModal';
 import apiClient from '../../../api/apiClient';
 import { usePlayer } from '../../music/context/PlayerContext';
 
@@ -141,7 +141,7 @@ const SongCard = ({ song, onPlay, showAddButton = true }) => {
           onClose={() => setShowAddModal(false)}
           songId={song.id}
           onSuccess={() => {
-            // Optionally reload playlists or update UI
+            // Optionally reload playlists  
           }}
         />
       )}
