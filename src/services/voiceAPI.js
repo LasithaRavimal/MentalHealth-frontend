@@ -13,7 +13,7 @@ const getAuthToken = () => {
  */
 export const analyzeVoice = async (audioFile) => {
   const token = getAuthToken();
-  
+
   if (!token) {
     throw new Error('Authentication required. Please login first.');
   }
@@ -50,7 +50,7 @@ export const analyzeVoice = async (audioFile) => {
  */
 export const getAnalysisHistory = async (limit = 10, skip = 0) => {
   const token = getAuthToken();
-  
+
   if (!token) {
     throw new Error('Authentication required. Please login first.');
   }
@@ -86,7 +86,7 @@ export const getAnalysisHistory = async (limit = 10, skip = 0) => {
  */
 export const getAnalysisResult = async (analysisId) => {
   const token = getAuthToken();
-  
+
   if (!token) {
     throw new Error('Authentication required. Please login first.');
   }
@@ -122,7 +122,7 @@ export const getAnalysisResult = async (analysisId) => {
  */
 export const deleteAnalysis = async (analysisId) => {
   const token = getAuthToken();
-  
+
   if (!token) {
     throw new Error('Authentication required. Please login first.');
   }
@@ -147,6 +147,42 @@ export const deleteAnalysis = async (analysisId) => {
     return await response.json();
   } catch (error) {
     console.error('Error deleting analysis:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get voice trend analysis
+ * @param {number} weeks - Number of weeks for trend analysis
+ * @returns {Promise} Trend analysis data
+ */
+export const getVoiceTrendAnalysis = async (weeks = 4) => {
+  const token = getAuthToken();
+
+  if (!token) {
+    throw new Error('Authentication required. Please login first.');
+  }
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/voice/trend?weeks=${weeks}`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching voice trend analysis:', error);
     throw error;
   }
 };

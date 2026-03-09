@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import VoiceRecorder from './VoiceRecorder';
 import VoiceUploader from './VoiceUploader';
 import AnalysisResults from './AnalysisResults';
@@ -6,6 +7,7 @@ import LoadingSpinner from './LoadingSpinner';
 import { analyzeVoice } from '../../services/voiceAPI';
 
 const VoiceAnalysisDashboard = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
@@ -24,7 +26,7 @@ const VoiceAnalysisDashboard = () => {
 
       // Call the API
       const response = await analyzeVoice(audioFile);
-      
+
       console.log(' Analysis successful:', response);
       setResults(response);
     } catch (error) {
@@ -41,7 +43,15 @@ const VoiceAnalysisDashboard = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto relative">
+      <div className="absolute -top-16 right-0">
+        <button
+          onClick={() => navigate('/voice/history')}
+          className="px-6 py-2 bg-spotify-gray hover:bg-spotify-light-gray text-text-white font-semibold rounded-full transition-colors flex items-center shadow-lg"
+        >
+          <span className="mr-2">🕒</span> View History
+        </button>
+      </div>
       {/* Input Section - Only show if not loading and no results */}
       {!loading && !results && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
@@ -110,7 +120,7 @@ const VoiceAnalysisDashboard = () => {
               Analyze Another Recording
             </button>
             <button
-              onClick={() => window.location.href = '/voice/history'}
+              onClick={() => navigate('/voice/history')}
               className="px-8 py-3 bg-spotify-gray hover:bg-spotify-light-gray text-text-white font-bold rounded-full transition-colors"
             >
               View History

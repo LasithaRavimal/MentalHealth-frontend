@@ -13,6 +13,7 @@ import ProfileSettings from "./components/user/ProfileSettings";
 import VoicePage from "./pages/VoicePage";
 import EEGDetectionPage from "./pages/EEGDetectionPage";
 import FaceDetectionPage from "./pages/faceDetectionPage"; // keep this path as-is (case sensitive in some OS)
+import VoiceHistoryPage from "./pages/VoiceHistoryPage";
 
 /* Admin */
 import SongManagement from "./components/admin/music/SongManagement";
@@ -143,6 +144,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <VoicePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/voice/history"
+        element={
+          <ProtectedRoute>
+            <VoiceHistoryPage />
           </ProtectedRoute>
         }
       />
