@@ -157,6 +157,15 @@ function AppRoutes() {
       />
 
       <Route
+        path="/voicehistorypage"
+        element={
+          <ProtectedRoute>
+            <VoiceHistoryPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/eeg"
         element={
           <ProtectedRoute>

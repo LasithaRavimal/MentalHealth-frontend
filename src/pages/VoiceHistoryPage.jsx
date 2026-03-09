@@ -10,7 +10,6 @@ import {
     Legend,
     ResponsiveContainer
 } from 'recharts';
-// FIX 1: Corrected import path (was '../services/voiceAPI', should be '../../services/voiceAPI')
 import { getAnalysisHistory, getVoiceTrendAnalysis, deleteAnalysis } from '../services/voiceAPI';
 import LoadingSpinner from '../components/voice/LoadingSpinner';
 
@@ -39,7 +38,6 @@ const VoiceHistoryPage = () => {
         setHistoryError(null);
         try {
             const data = await getAnalysisHistory(50, 0);
-            // Backend returns { "analyses": [...] }
             const items = Array.isArray(data?.analyses)
                 ? data.analyses
                 : Array.isArray(data?.items)
@@ -92,20 +90,14 @@ const VoiceHistoryPage = () => {
         });
     };
 
-    // Trend endpoint returns a flat object:
-    // { period_weeks, start_date, end_date, total_analyses, average_predictions, trend_summary }
-    // average_predictions: { depression_score, anxiety_score, stress_score, confidence } or null
     const normalizedTrend = trendData ? {
         summaryMessage: trendData.trend_summary ?? null,
         totalSessions: trendData.total_analyses ?? 0,
         averageConfidence: trendData.average_predictions?.confidence ?? null,
         avgDepression: trendData.average_predictions?.depression_score ?? null,
-        avgAnxiety: trendData.average_predictions?.anxiety_score ?? null,
         avgStress: trendData.average_predictions?.stress_score ?? null,
     } : null;
 
-    // The trend endpoint only gives aggregated averages for the whole period — no per-day points.
-    // So we build the chart by bucketing the already-loaded history records into weekly slots.
     const buildChartFromHistory = (historyItems, numWeeks) => {
         if (!historyItems || historyItems.length === 0) return [];
         const now = new Date();
@@ -115,7 +107,6 @@ const VoiceHistoryPage = () => {
             slotEnd.setDate(now.getDate() - i * 7);
             const slotStart = new Date(slotEnd);
             slotStart.setDate(slotEnd.getDate() - 7);
-            // Label like "Feb 22" from slot start
             const label = slotStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
             slots.push({ start: slotStart, end: slotEnd, label });
         }
@@ -129,7 +120,6 @@ const VoiceHistoryPage = () => {
             return {
                 date: label,
                 depression: avg('depression_score'),
-                anxiety: avg('anxiety_score'),
                 stress: avg('stress_score'),
                 confidence: avg('confidence'),
             };
@@ -138,9 +128,7 @@ const VoiceHistoryPage = () => {
 
     const chartData = buildChartFromHistory(history, weeks);
 
-    // Determine which lines have data
     const hasDepression = chartData.some(d => d.depression > 0);
-    const hasAnxiety = chartData.some(d => d.anxiety > 0);
     const hasStress = chartData.some(d => d.stress > 0);
     const hasConfidence = chartData.some(d => d.confidence > 0);
 
@@ -165,7 +153,6 @@ const VoiceHistoryPage = () => {
                 null,
             emotions: item?.emotions ?? predictionObj?.emotions ?? null,
             depressionLevel: predictionObj?.depression_level ?? item?.depression_level,
-            anxietyLevel: predictionObj?.anxiety_level ?? item?.anxiety_level,
             stressLevel: predictionObj?.stress_level ?? item?.stress_level,
         };
     };
@@ -266,13 +253,10 @@ const VoiceHistoryPage = () => {
                                                     </div>
                                                 )}
 
-                                                {(normalized.depressionLevel || normalized.anxietyLevel || normalized.stressLevel) && (
+                                                {(normalized.depressionLevel || normalized.stressLevel) && (
                                                     <div className="mt-2 pt-2 border-t border-zinc-700/50 text-sm text-zinc-300 space-y-0.5">
                                                         {normalized.depressionLevel && (
                                                             <div>Depression: <span className="capitalize">{normalized.depressionLevel}</span></div>
-                                                        )}
-                                                        {normalized.anxietyLevel && (
-                                                            <div>Anxiety: <span className="capitalize">{normalized.anxietyLevel}</span></div>
                                                         )}
                                                         {normalized.stressLevel && (
                                                             <div>Stress: <span className="capitalize">{normalized.stressLevel}</span></div>
@@ -333,7 +317,7 @@ const VoiceHistoryPage = () => {
                             ) : (
                                 <div className="flex-1 flex flex-col space-y-6">
                                     {/* Summary Cards */}
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                         <div className="bg-zinc-800/50 rounded-lg p-4 border border-zinc-700/50 flex flex-col shadow-inner">
                                             <div className="text-xs text-text-gray uppercase tracking-wider mb-1">Sessions</div>
                                             <div className="text-2xl font-bold text-white">{normalizedTrend?.totalSessions ?? chartData.length}</div>
@@ -343,12 +327,6 @@ const VoiceHistoryPage = () => {
                                             <div className="text-xs text-text-gray uppercase tracking-wider mb-1">Avg Depression</div>
                                             <div className="text-2xl font-bold text-red-400">
                                                 {normalizedTrend?.avgDepression != null ? `${(normalizedTrend.avgDepression * 100).toFixed(0)}%` : '--'}
-                                            </div>
-                                        </div>
-                                        <div className="bg-zinc-800/50 rounded-lg p-4 border border-zinc-700/50 flex flex-col shadow-inner">
-                                            <div className="text-xs text-text-gray uppercase tracking-wider mb-1">Avg Anxiety</div>
-                                            <div className="text-2xl font-bold text-yellow-400">
-                                                {normalizedTrend?.avgAnxiety != null ? `${(normalizedTrend.avgAnxiety * 100).toFixed(0)}%` : '--'}
                                             </div>
                                         </div>
                                         <div className="bg-zinc-800/50 rounded-lg p-4 border border-zinc-700/50 flex flex-col shadow-inner">
@@ -367,7 +345,7 @@ const VoiceHistoryPage = () => {
                                     {/* Chart */}
                                     <div className="flex-1 bg-zinc-900/50 rounded-xl p-4 border border-zinc-800 w-full min-h-[350px]">
                                         <ResponsiveContainer width="100%" height="100%">
-                                            <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
+                                            <LineChart data={chartData} margin={{ top: 20, right: 10, left: 0, bottom: 20 }}>
                                                 <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
                                                 <XAxis
                                                     dataKey="date"
@@ -376,6 +354,7 @@ const VoiceHistoryPage = () => {
                                                     tickMargin={10}
                                                 />
                                                 <YAxis
+                                                    yAxisId="left"
                                                     stroke="#888"
                                                     tick={{ fill: '#888', fontSize: 12 }}
                                                     tickFormatter={(val) => `${(val * 100).toFixed(0)}%`}
@@ -387,51 +366,46 @@ const VoiceHistoryPage = () => {
                                                     formatter={(value, name) => [`${(value * 100).toFixed(1)}%`, name]}
                                                 />
                                                 <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                                                {/* FIX 5: Show depression/anxiety/stress lines when available, fall back to confidence */}
+                                                
+                                                {/* Symptom Lines - Solid and Thick */}
                                                 {hasDepression && (
                                                     <Line
+                                                        yAxisId="left"
                                                         type="monotone"
                                                         dataKey="depression"
                                                         stroke="#f87171"
-                                                        strokeWidth={2.5}
+                                                        strokeWidth={3}
                                                         dot={{ r: 4, fill: '#f87171', strokeWidth: 0 }}
                                                         activeDot={{ r: 7, strokeWidth: 0 }}
                                                         name="Depression"
                                                         connectNulls
                                                     />
                                                 )}
-                                                {hasAnxiety && (
-                                                    <Line
-                                                        type="monotone"
-                                                        dataKey="anxiety"
-                                                        stroke="#facc15"
-                                                        strokeWidth={2.5}
-                                                        dot={{ r: 4, fill: '#facc15', strokeWidth: 0 }}
-                                                        activeDot={{ r: 7, strokeWidth: 0 }}
-                                                        name="Anxiety"
-                                                        connectNulls
-                                                    />
-                                                )}
                                                 {hasStress && (
                                                     <Line
+                                                        yAxisId="left"
                                                         type="monotone"
                                                         dataKey="stress"
                                                         stroke="#fb923c"
-                                                        strokeWidth={2.5}
+                                                        strokeWidth={3}
                                                         dot={{ r: 4, fill: '#fb923c', strokeWidth: 0 }}
                                                         activeDot={{ r: 7, strokeWidth: 0 }}
                                                         name="Stress"
                                                         connectNulls
                                                     />
                                                 )}
+                                                
+                                                {/* Confidence Line - Highlighted as secondary background info */}
                                                 {hasConfidence && (
                                                     <Line
+                                                        yAxisId="left"
                                                         type="monotone"
                                                         dataKey="confidence"
                                                         stroke="#1db954"
-                                                        strokeWidth={2.5}
-                                                        dot={{ r: 4, fill: '#1db954', strokeWidth: 0 }}
-                                                        activeDot={{ r: 7, strokeWidth: 0 }}
+                                                        strokeWidth={2}
+                                                        strokeDasharray="5 5" // Makes the line dashed
+                                                        dot={{ r: 3, fill: '#1db954', strokeWidth: 0 }}
+                                                        activeDot={{ r: 5, strokeWidth: 0 }}
                                                         name="Confidence"
                                                         connectNulls
                                                     />

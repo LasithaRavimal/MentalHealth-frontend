@@ -92,7 +92,7 @@ const Profile = () => {
               </button>
 
               <button
-                onClick={() => navigate('/voicehistory')}
+                onClick={() => navigate('/voicehistorypage')}
                 className="flex flex-col items-center justify-center gap-3 p-6 rounded-xl bg-spotify-light-gray/20 hover:bg-spotify-light-gray/40 transition-colors border border-white/5"
               >
                 <MdMic className="w-8 h-8 text-spotify-green" />
