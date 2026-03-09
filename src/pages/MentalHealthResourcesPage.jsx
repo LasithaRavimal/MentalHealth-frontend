@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -12,6 +13,7 @@ const HOTLINES = [
     note: "Sri Lanka's first befriending service",
     color: "border-spotify-green",
     accent: "text-spotify-green",
+    logo: "dist/assets/Sumithrayo-1.png",
   },
   {
     name: "National Mental Health Helpline",
@@ -22,6 +24,7 @@ const HOTLINES = [
     note: "Free government helpline",
     color: "border-blue-400",
     accent: "text-blue-400",
+    logo: "dist/assets/1926.jpg",
   },
   {
     name: "CCCline",
@@ -32,6 +35,7 @@ const HOTLINES = [
     note: "Free & confidential counselling",
     color: "border-yellow-400",
     accent: "text-yellow-400",
+    logo: "dist/assets/cccline.png",
   },
   {
     name: "NIMH Sri Lanka",
@@ -42,13 +46,15 @@ const HOTLINES = [
     note: "Inpatient & outpatient services",
     color: "border-orange-400",
     accent: "text-orange-400",
+    logo: "dist/assets/images.png",
   },
 ];
 
 const VIDEOS = [
   {
     id: "g9KKdB4-9sE",
-    title: "How To Manage Your Stress | Stress Management Techniques (3 Motivational Tips)",
+    title:
+      "How To Manage Your Stress | Stress Management Techniques (3 Motivational Tips)",
     channel: "Simplebooks",
     duration: "10:53",
     tag: "#Stress Management ",
@@ -370,12 +376,28 @@ const HotlineCard = ({ contact, index }) => (
     className={`bg-spotify-dark-gray rounded-xl border-l-4 ${contact.color} p-5 flex flex-col gap-3 hover:bg-spotify-light-gray transition-colors duration-200 animate-fade-in`}
     style={{ animationDelay: `${index * 0.1}s` }}
   >
-    <div>
-      <h3 className={`font-extrabold text-lg ${contact.accent}`}>
-        {contact.name}
-      </h3>
-      <p className="text-text-gray text-sm">{contact.role}</p>
+
+    {/* Header with logo */}
+    <div className="flex items-center gap-3">
+
+      {contact.logo && (
+        <img
+          src={contact.logo}
+          alt={contact.name}
+          className="w-10 h-10 object-contain rounded-md bg-white p-1"
+        />
+      )}
+
+      <div>
+        <h3 className={`font-extrabold text-lg ${contact.accent}`}>
+          {contact.name}
+        </h3>
+        <p className="text-text-gray text-sm">{contact.role}</p>
+      </div>
+
     </div>
+
+    {/* Phone */}
     <div className="flex items-center gap-2">
       <svg
         className="w-4 h-4 text-text-gray flex-shrink-0"
@@ -390,6 +412,7 @@ const HotlineCard = ({ contact, index }) => (
           d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
         />
       </svg>
+
       <a
         href={`tel:${contact.phone.replace(/\s/g, "")}`}
         className={`font-bold text-xl tracking-wide ${contact.accent} hover:underline`}
@@ -398,6 +421,8 @@ const HotlineCard = ({ contact, index }) => (
         {contact.phone}
       </a>
     </div>
+
+    {/* Hours + Note */}
     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-text-gray">
       <span className="flex items-center gap-1">
         <svg
@@ -415,8 +440,11 @@ const HotlineCard = ({ contact, index }) => (
         </svg>
         {contact.hours}
       </span>
+
       {contact.note && <span className="italic">{contact.note}</span>}
     </div>
+
+    {/* Website */}
     {contact.website && (
       <a
         href={contact.website}
@@ -441,6 +469,7 @@ const HotlineCard = ({ contact, index }) => (
         {contact.website.replace("https://", "")}
       </a>
     )}
+
   </div>
 );
 
@@ -455,42 +484,58 @@ const TABS = [
 
 const MentalHealthResourcesPage = () => {
   const [activeTab, setActiveTab] = useState(0);
+  const navigate = useNavigate();
 
   return (
     <main className="min-h-screen bg-spotify-black text-white">
       {/* Hero */}
+      {/* Hero */}
       <div className="relative overflow-hidden bg-spotify-dark-gray border-b border-spotify-gray">
-        {/* Decorative blobs */}
+        {/* Background glow */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-spotify-green/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
         <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl translate-y-1/2 pointer-events-none" />
 
-        <div className="max-w-6xl mx-auto px-6 py-14 md:py-20 relative">
+        <div className="max-w-6xl mx-auto px-6 py-16 md:py-20 relative">
+          {/* HERO CONTENT */}
+          <div className="flex flex-col md:flex-row items-center justify-between gap-10 animate-fade-in">
+            {/* LEFT SIDE TEXT */}
+            <div className="max-w-2xl">
+              <button
+                onClick={() => navigate("/voicehistorypage")}
+                className="text-text-gray hover:text-white mb-4 flex items-center text-sm font-medium transition-colors"
+              >
+                <span className="mr-2">&larr;</span> Back to Voice Analysis
+              </button>
 
-          <div className="max-w-2xl animate-fade-in">
-            <span className="inline-block bg-spotify-green/10 text-spotify-green text-xs font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full border border-spotify-green/20 mb-4">
-              Mental Health Resources · Sri Lanka
-            </span>
-            <h1 className="text-4xl md:text-5xl font-extrabold leading-tight mb-4">
-              You are not alone.
-              <br />
-              <span className="text-spotify-green">Help is here.</span>
-            </h1>
-            <p className="text-text-gray text-lg leading-relaxed">
-              A curated collection of crisis contacts, guided exercises, videos,
-              and wellness tips — all in one place. If you're struggling, please
-              reach out.
-            </p>
-            <div className="flex-shrink-0">
+              <span className="inline-block bg-spotify-green/10 text-spotify-green text-xs font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full border border-spotify-green/20 mb-5">
+                Mental Health Resources · Sri Lanka
+              </span>
+
+              <h1 className="text-4xl md:text-5xl font-extrabold leading-tight mb-4">
+                You are not alone.
+                <br />
+                <span className="text-spotify-green">Help is here.</span>
+              </h1>
+
+              <p className="text-text-gray text-lg leading-relaxed">
+                A curated collection of crisis contacts, guided exercises,
+                videos, and wellness tips — all in one place. If you're
+                struggling, please reach out.
+              </p>
+            </div>
+
+            {/* RIGHT SIDE FLAG */}
+            <div className="flex-shrink-0 hidden md:block">
               <img
                 src="dist/assets/Flag_of_Sri_Lanka.png"
-                alt="Mental Health Resources"
-                className="w-64 max-w-full rounded-lg border border-spotify-gray shadow-lg"
+                alt="Sri Lanka Flag"
+                className="w-64 rounded-xl border border-spotify-gray shadow-lg"
               />
             </div>
           </div>
 
-          {/* Quick-dial banner */}
-          <div className="mt-8 flex flex-wrap gap-3">
+          {/* Quick Dial Buttons */}
+          <div className="mt-10 flex flex-wrap gap-3">
             {HOTLINES.slice(0, 2).map((h) => (
               <a
                 key={h.phone}
@@ -510,9 +555,11 @@ const MentalHealthResourcesPage = () => {
                     d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
                   />
                 </svg>
+
                 <span className="text-sm font-bold text-white group-hover:text-spotify-green transition-colors">
                   {h.name}
                 </span>
+
                 <span className="text-text-gray text-sm">{h.phone}</span>
               </a>
             ))}
