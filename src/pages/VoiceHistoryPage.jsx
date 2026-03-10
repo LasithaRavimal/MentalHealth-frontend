@@ -116,7 +116,7 @@ const VoiceHistoryPage = () => {
       slotEnd.setDate(now.getDate() - i * 7);
       const slotStart = new Date(slotEnd);
       slotStart.setDate(slotEnd.getDate() - 7);
-      const label = slotStart.toLocaleDateString(undefined, {
+      const label = slotEnd.toLocaleDateString(undefined, {
         month: "short",
         day: "numeric",
       });
