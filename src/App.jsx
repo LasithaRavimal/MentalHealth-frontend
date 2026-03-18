@@ -2,6 +2,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
+
+
 /* =========================
    PAGES
 ========================= */
@@ -12,7 +14,15 @@ import Profile from "./components/user/Profile";
 import ProfileSettings from "./components/user/ProfileSettings";
 import VoicePage from "./pages/VoicePage";
 import EEGDetectionPage from "./pages/EEGDetectionPage";
-import FaceDetectionPage from "./pages/faceDetectionPage"; // keep this path as-is (case sensitive in some OS)
+import FaceHistoryPage from "./pages/FaceHistoryPage";
+
+
+/* ✅ ONLY FACE PAGE (Simulator) */
+import EmotionSimulatorPage from "./pages/EmotionSimulatorPage";
+
+/*voice*/
+import VoiceHistoryPage from "./pages/VoiceHistoryPage";
+import MentalHealthResourcesPage from './pages/MentalHealthResourcesPage';
 
 /* Admin */
 import SongManagement from "./components/admin/music/SongManagement";
@@ -20,6 +30,14 @@ import SongManagement from "./components/admin/music/SongManagement";
 /* Music */
 import MusicWrapper from "./components/music/MusicWrapper";
 import MusicPlayerHome from "./components/music/MusicPlayerHome";
+import MusicProfile from './components/user/MusicProfile';
+import MusicProfileSettings from './components/user/MusicProfileSettings';
+import SearchPage from './components/music/SearchPage';
+import LibraryPage from './components/music/LibraryPage';
+import PlaylistPage from './components/music/playlist/PlaylistPage';
+import CategoryPage from './components/music/CategoryPage';
+import SessionHistoryPage from './components/music/SessionHistoryPage';
+import WeeklyAnalysisPage from './components/music/WeeklyAnalysisPage';
 
 /* =========================
    SHARED UI
@@ -66,11 +84,7 @@ const RootRedirect = () => {
   if (loading) return <FullScreenLoader />;
   if (!user) return <Navigate to="/login" replace />;
 
-  return user.role === "admin" ? (
-    <Navigate to="/admin" replace />
-  ) : (
-    <Navigate to="/landing" replace />
-  );
+  return user.role === "admin" ? <Navigate to="/admin" replace /> : <Navigate to="/landing" replace />;
 };
 
 /* =========================
@@ -102,14 +116,21 @@ function AppRoutes() {
         }
       />
 
+
+
+      {/* ✅ SINGLE SOURCE OF TRUTH: Simulator */}
       <Route
-        path="/face"
+        path="/emotion-simulator"
         element={
           <ProtectedRoute>
-            <FaceDetectionPage />
+            <EmotionSimulatorPage />
           </ProtectedRoute>
         }
       />
+
+      {/* ✅ Redirect old paths to simulator (no broken links) */}
+      <Route path="/emotion-tracking" element={<Navigate to="/emotion-simulator" replace />} />
+      <Route path="/face" element={<Navigate to="/emotion-simulator" replace />} />
 
       <Route
         path="/profile"
@@ -121,6 +142,15 @@ function AppRoutes() {
       />
 
       <Route
+  path="/facehistory"
+  element={
+    <ProtectedRoute>
+      <FaceHistoryPage />
+    </ProtectedRoute>
+  }
+/>
+
+      <Route
         path="/profile-settings"
         element={
           <ProtectedRoute>
@@ -129,7 +159,7 @@ function AppRoutes() {
         }
       />
 
-      {/* Keep your existing path + add a clean alias */}
+      {/* voice routes */}
       <Route
         path="/pages/VoicePage"
         element={
@@ -143,6 +173,32 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <VoicePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/voice/history"
+        element={
+          <ProtectedRoute>
+            <VoiceHistoryPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/voicehistorypage"
+        element={
+          <ProtectedRoute>
+            <VoiceHistoryPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/mentalhealthresources"
+        element={
+          <ProtectedRoute>  
+            <MentalHealthResourcesPage />
           </ProtectedRoute>
         }
       />
@@ -167,6 +223,102 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/search"
+        element={
+          <ProtectedRoute>
+            <MusicWrapper>
+              <SearchPage />
+            </MusicWrapper>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/library"
+        element={
+          <ProtectedRoute>
+            <MusicWrapper>
+              <LibraryPage />
+            </MusicWrapper>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/playlist/:id"
+        element={
+          <ProtectedRoute>
+            <MusicWrapper>
+              <PlaylistPage />
+            </MusicWrapper>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/playlist/:id"
+        element={
+          <ProtectedRoute>
+            <MusicWrapper>
+              <PlaylistPage />
+            </MusicWrapper>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/category/:categoryName"
+        element={
+          <ProtectedRoute>
+            <MusicWrapper>
+              <CategoryPage />
+            </MusicWrapper>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/sessions"
+        element={
+          <ProtectedRoute>
+            <MusicWrapper>
+              <SessionHistoryPage />
+            </MusicWrapper>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile-musicprofile"
+        element={
+          <ProtectedRoute>
+             <MusicWrapper>
+            <MusicProfile />
+            </MusicWrapper>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/musicprofile-settings"
+        element={
+          <ProtectedRoute>
+            <MusicWrapper>
+            <MusicProfileSettings />
+            </MusicWrapper>
+          </ProtectedRoute>
+        }
+      />
+         <Route
+  path="/weekly-analysis"
+  element={
+    <ProtectedRoute>
+      <MusicWrapper>
+        <WeeklyAnalysisPage />
+      </MusicWrapper>
+    </ProtectedRoute>
+  }
+/>
+
 
       {/* ---------- Admin ---------- */}
       <Route

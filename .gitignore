@@ -8,7 +8,7 @@ node_modules/
 
 # Production
 /build
-/dist
+
 
 # Misc
 .DS_Store
@@ -67,7 +67,7 @@ out/
 
 # Nuxt.js (if ever used)
 .nuxt
-dist
+
 
 # Storybook build outputs
 .out
