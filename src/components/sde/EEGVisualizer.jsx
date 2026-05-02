@@ -21,16 +21,26 @@ ChartJS.register(
 );
 
 const COLORS = [
-  "#ff6384", "#36a2eb", "#ffce56",
-  "#4bc0c0", "#9966ff", "#ff9f40",
-  "#2ecc71", "#e74c3c", "#3498db"
+  "#e6194b","#3cb44b","#ffe119","#4363d8","#f58231","#911eb4","#46f0f0","#f032e6","#bcf60c","#fabebe",
+  "#008080","#e6beff","#9a6324","#fffac8","#800000","#aaffc3","#808000","#ffd8b1","#000075","#808080",
+  "#ff6f61","#6b5b95","#88b04b","#f7cac9","#92a8d1","#955251","#b565a7","#009b77","#dd4124","#45b8ac",
+  "#e94b3c","#6f9fd8","#c3447a","#00a86b","#ffb347","#b19cd9","#77dd77","#ff6961","#aec6cf","#cfcfc4",
+  "#836953","#ffb6c1","#20b2aa","#9370db","#3cb371","#ff7f50","#6495ed","#dc143c","#00ced1","#9400d3",
+  "#ff1493","#00bfff","#696969","#1e90ff","#b22222","#228b22","#ff8c00","#9932cc","#8fbc8f","#483d8b",
+  "#2f4f4f","#00fa9a","#7b68ee","#ff4500","#2e8b57","#daa520","#adff2f","#ff6347","#4682b4","#d2691e"
 ];
 
 const CHANNELS = [
-  "Fp1", "Fp2", "F3", "F4",
-  "C3", "C4", "P3", "P4", "O1"
+  'Fp1', 'AF7', 'AF3', 'F1', 'F3', 'F5', 'F7', 'FT7',
+  'FC5', 'FC3', 'FC1', 'C1', 'C3', 'C5', 'T7', 'TP7',
+  'CP5', 'CP3', 'CP1', 'P1', 'P3', 'P5', 'P7', 'P9',
+  'PO7', 'PO3', 'O1', 'Iz', 'Oz', 'POz', 'Pz', 'CPz',
+  'Fpz', 'Fp2', 'AF8', 'AF4', 'AFz', 'Fz', 'F2', 'F4',
+  'F6', 'F8', 'FT8', 'FC6', 'FC4', 'FC2', 'FCz', 'Cz',
+  'C2', 'C4', 'C6', 'T8', 'TP8', 'CP6', 'CP4', 'CP2',
+  'P2', 'P4', 'P6', 'P8', 'P10', 'PO8', 'PO4', 'O2',
+  'VEOa', 'VEOb', 'HEOL', 'HEOR', 'Nose', 'TP10'
 ];
-
 export default function EEGVisualizer({ eeg }) {
   const [activeChannel, setActiveChannel] = useState("P3"); // default
 
