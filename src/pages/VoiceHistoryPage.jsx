@@ -101,11 +101,37 @@ const VoiceHistoryPage = () => {
     ? {
         summaryMessage: trendData.trend_summary ?? null,
         totalSessions: trendData.total_analyses ?? 0,
-        averageConfidence: trendData.average_predictions?.confidence ?? null,
-        avgDepression: trendData.average_predictions?.depression_score ?? null,
-        avgStress: trendData.average_predictions?.stress_score ?? null,
+        avgDepressionLevel: trendData.average_predictions?.depression_level ?? null,
+        avgStressLevel: trendData.average_predictions?.stress_level ?? null,
       }
     : null;
+
+  // Map level strings to numeric values for charting
+  const depressionLevelToNum = (level) => {
+    switch (level?.toLowerCase()) {
+      case 'depression': return 1;
+      case 'normal': default: return 0;
+    }
+  };
+
+  const stressLevelToNum = (level) => {
+    switch (level?.toLowerCase()) {
+      case 'high': return 2;
+      case 'moderate': return 1;
+      case 'low': default: return 0;
+    }
+  };
+
+  const depressionNumToLabel = (num) => {
+    if (num >= 0.5) return 'Depression';
+    return 'No Depression';
+  };
+
+  const stressNumToLabel = (num) => {
+    if (num >= 1.5) return 'High';
+    if (num >= 0.5) return 'Moderate';
+    return 'Low';
+  };
 
   const buildChartFromHistory = (historyItems, numWeeks) => {
     if (!historyItems || historyItems.length === 0) return [];
@@ -131,14 +157,13 @@ const VoiceHistoryPage = () => {
           return d >= start && d < end;
         });
         if (bucket.length === 0) return null;
-        const avg = (key) =>
-          bucket.reduce((s, i) => s + (i.prediction?.[key] ?? 0), 0) /
+        const avgLevel = (levelKey, mapFn) =>
+          bucket.reduce((s, i) => s + mapFn(i.prediction?.[levelKey]), 0) /
           bucket.length;
         return {
           date: label,
-          depression: avg("depression_score"),
-          stress: avg("stress_score"),
-          confidence: avg("confidence"),
+          depression: avgLevel("depression_level", depressionLevelToNum),
+          stress: avgLevel("stress_level", stressLevelToNum),
         };
       })
       .filter(Boolean);
@@ -148,7 +173,6 @@ const VoiceHistoryPage = () => {
 
   const hasDepression = chartData.some((d) => d.depression > 0);
   const hasStress = chartData.some((d) => d.stress > 0);
-  const hasConfidence = chartData.some((d) => d.confidence > 0);
 
   const normalizeHistoryItem = (item) => {
     const predictionObj =
@@ -267,11 +291,6 @@ const VoiceHistoryPage = () => {
                           >
                             {normalized.prediction}
                           </span>
-                          <span className="text-sm font-normal text-zinc-400">
-                            {normalized.confidence != null
-                              ? `${(normalized.confidence * 100).toFixed(1)}% Conf`
-                              : ""}
-                          </span>
                         </div>
 
                         {topEmotionEntry && (
@@ -295,7 +314,7 @@ const VoiceHistoryPage = () => {
                               <div>
                                 Depression:{" "}
                                 <span className="capitalize">
-                                  {normalized.depressionLevel}
+                                  {normalized.depressionLevel?.toLowerCase() === 'normal' ? 'No Depression' : normalized.depressionLevel}
                                 </span>
                               </div>
                             )}
@@ -384,22 +403,23 @@ const VoiceHistoryPage = () => {
                     </div>
                     <div className="bg-zinc-800/50 rounded-lg p-4 border border-zinc-700/50 flex flex-col shadow-inner">
                       <div className="text-xs text-text-gray uppercase tracking-wider mb-1">
-                        Avg Depression
+                        Depression Level
                       </div>
-                      <div className="text-2xl font-bold text-red-400">
-                        {normalizedTrend?.avgDepression != null
-                          ? `${(normalizedTrend.avgStress * 100).toFixed(0)}%`
-                          : "--"}
+                      <div className={`text-2xl font-bold capitalize ${
+                        normalizedTrend?.avgDepressionLevel?.toLowerCase() === 'normal' ? 'text-spotify-green' : 'text-red-400'
+                      }`}>
+                        {normalizedTrend?.avgDepressionLevel?.toLowerCase() === 'normal' ? 'No Depression' : (normalizedTrend?.avgDepressionLevel ?? "--")}
                       </div>
                     </div>
                     <div className="bg-zinc-800/50 rounded-lg p-4 border border-zinc-700/50 flex flex-col shadow-inner">
                       <div className="text-xs text-text-gray uppercase tracking-wider mb-1">
-                        Avg Stress
+                        Stress Level
                       </div>
-                      <div className="text-2xl font-bold text-orange-400">
-                        {normalizedTrend?.avgStress != null
-                          ? `${(normalizedTrend.avgDepression * 100).toFixed(0)}%`
-                          : "--"}
+                      <div className={`text-2xl font-bold capitalize ${
+                        normalizedTrend?.avgStressLevel?.toLowerCase() === 'low' ? 'text-spotify-green' :
+                        normalizedTrend?.avgStressLevel?.toLowerCase() === 'moderate' ? 'text-yellow-400' : 'text-orange-400'
+                      }`}>
+                        {normalizedTrend?.avgStressLevel ?? "--"}
                       </div>
                     </div>
                   </div>
@@ -428,11 +448,30 @@ const VoiceHistoryPage = () => {
                           tickMargin={10}
                         />
                         <YAxis
-                          yAxisId="left"
-                          stroke="#888"
-                          tick={{ fill: "#888", fontSize: 12 }}
-                          tickFormatter={(val) => `${(val * 100).toFixed(0)}%`}
+                          yAxisId="depression"
+                          orientation="left"
+                          stroke="#f87171"
+                          tick={{ fill: "#f87171", fontSize: 11 }}
+                          tickFormatter={(val) => val >= 0.5 ? 'Depression' : 'Normal'}
                           domain={[0, 1]}
+                          ticks={[0, 1]}
+                          width={90}
+                          label={{ value: 'Depression', angle: -90, position: 'insideLeft', fill: '#f87171', fontSize: 12, offset: -5 }}
+                        />
+                        <YAxis
+                          yAxisId="stress"
+                          orientation="right"
+                          stroke="#fb923c"
+                          tick={{ fill: "#fb923c", fontSize: 11 }}
+                          tickFormatter={(val) => {
+                            if (val >= 1.5) return 'High';
+                            if (val >= 0.5) return 'Moderate';
+                            return 'Low';
+                          }}
+                          domain={[0, 2]}
+                          ticks={[0, 1, 2]}
+                          width={80}
+                          label={{ value: 'Stress', angle: 90, position: 'insideRight', fill: '#fb923c', fontSize: 12, offset: -5 }}
                         />
                         <Tooltip
                           contentStyle={{
@@ -442,56 +481,38 @@ const VoiceHistoryPage = () => {
                             borderRadius: "8px",
                           }}
                           labelStyle={{ color: "#a1a1aa", marginBottom: "4px" }}
-                          formatter={(value, name) => [
-                            `${(value * 100).toFixed(1)}%`,
-                            name,
-                          ]}
+                          formatter={(value, name) => {
+                            if (name === 'Depression') return [depressionNumToLabel(value), name];
+                            if (name === 'Stress') return [stressNumToLabel(value), name];
+                            return [value, name];
+                          }}
                         />
                         <Legend wrapperStyle={{ paddingTop: "20px" }} />
 
-                        {/* Symptom Lines - Solid and Thick */}
-                        {hasDepression && (
-                          <Line
-                            yAxisId="left"
-                            type="monotone"
-                            dataKey="depression"
-                            stroke="#f87171"
-                            strokeWidth={3}
-                            dot={{ r: 4, fill: "#f87171", strokeWidth: 0 }}
-                            activeDot={{ r: 7, strokeWidth: 0 }}
-                            name="Depression"
-                            connectNulls
-                          />
-                        )}
-                        {hasStress && (
-                          <Line
-                            yAxisId="left"
-                            type="monotone"
-                            dataKey="stress"
-                            stroke="#fb923c"
-                            strokeWidth={3}
-                            dot={{ r: 4, fill: "#fb923c", strokeWidth: 0 }}
-                            activeDot={{ r: 7, strokeWidth: 0 }}
-                            name="Stress"
-                            connectNulls
-                          />
-                        )}
-
-                        {/* Confidence Line - Highlighted as secondary background info */}
-                        {hasConfidence && (
-                          <Line
-                            yAxisId="left"
-                            type="monotone"
-                            dataKey="confidence"
-                            stroke="#1db954"
-                            strokeWidth={2}
-                            strokeDasharray="5 5" // Makes the line dashed
-                            dot={{ r: 3, fill: "#1db954", strokeWidth: 0 }}
-                            activeDot={{ r: 5, strokeWidth: 0 }}
-                            name="Confidence"
-                            connectNulls
-                          />
-                        )}
+                        {/* Depression Line */}
+                        <Line
+                          yAxisId="depression"
+                          type="stepAfter"
+                          dataKey="depression"
+                          stroke="#f87171"
+                          strokeWidth={3}
+                          dot={{ r: 5, fill: "#f87171", strokeWidth: 2, stroke: "#18181b" }}
+                          activeDot={{ r: 8, strokeWidth: 0 }}
+                          name="Depression"
+                          connectNulls
+                        />
+                        {/* Stress Line */}
+                        <Line
+                          yAxisId="stress"
+                          type="stepAfter"
+                          dataKey="stress"
+                          stroke="#fb923c"
+                          strokeWidth={3}
+                          dot={{ r: 5, fill: "#fb923c", strokeWidth: 2, stroke: "#18181b" }}
+                          activeDot={{ r: 8, strokeWidth: 0 }}
+                          name="Stress"
+                          connectNulls
+                        />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>

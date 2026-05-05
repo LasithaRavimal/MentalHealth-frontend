@@ -1,3 +1,5 @@
+import { buildAudioFilename } from '../utils/audioUtils';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 //Get authentication token from localStorage
@@ -19,7 +21,17 @@ export const analyzeVoice = async (audioFile) => {
   }
 
   const formData = new FormData();
-  formData.append('audio', audioFile);
+  const audioMimeType = audioFile?.type || 'audio/webm';
+  const filename =
+    audioFile instanceof File && audioFile.name
+      ? audioFile.name
+      : buildAudioFilename(audioMimeType);
+
+  console.debug('[voiceAPI] audioBlob.type:', audioMimeType || '(empty)');
+  console.debug('[voiceAPI] audioBlob.size:', audioFile?.size ?? 0);
+  console.debug('[voiceAPI] chosen filename:', filename);
+
+  formData.append('audio', audioFile, filename);
 
   try {
     const response = await fetch(`${API_BASE_URL}/api/voice/analyze`, {

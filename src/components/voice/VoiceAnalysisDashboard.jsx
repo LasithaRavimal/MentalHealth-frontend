@@ -5,6 +5,7 @@ import VoiceUploader from './VoiceUploader';
 import AnalysisResults from './AnalysisResults';
 import LoadingSpinner from './LoadingSpinner';
 import { analyzeVoice } from '../../services/voiceAPI';
+import { buildAudioFilename } from '../../utils/audioUtils';
 
 const VoiceAnalysisDashboard = () => {
   const navigate = useNavigate();
@@ -21,7 +22,11 @@ const VoiceAnalysisDashboard = () => {
       // Convert Blob to File if needed
       let audioFile = audioData;
       if (audioData instanceof Blob && !(audioData instanceof File)) {
-        audioFile = new File([audioData], 'recording.ogg', { type: 'audio/ogg' });
+        const filename = buildAudioFilename(audioData.type);
+        console.debug('[VoiceAnalysisDashboard] audioBlob.type:', audioData.type || '(empty)');
+        console.debug('[VoiceAnalysisDashboard] audioBlob.size:', audioData.size);
+        console.debug('[VoiceAnalysisDashboard] chosen filename:', filename);
+        audioFile = new File([audioData], filename, { type: audioData.type || 'audio/webm' });
       }
 
       // Call the API
