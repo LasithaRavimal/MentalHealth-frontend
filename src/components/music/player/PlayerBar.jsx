@@ -257,7 +257,7 @@ const PlayerBar = () => {
               className="px-4 py-2 bg-spotify-green hover:bg-spotify-green-hover text-white rounded-full text-sm font-semibold transition-colors"
               title="Find Your Stress Level"
             >
-              Find Stress
+              Find Result
             </button>
           )}
           <button
@@ -277,4 +277,3 @@ const PlayerBar = () => {
 };
 
 export default PlayerBar;
-
