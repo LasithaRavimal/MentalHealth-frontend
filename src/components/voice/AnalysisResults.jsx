@@ -11,19 +11,32 @@ const AnalysisResults = ({ data }) => {
   const getLevelColor = (level) => {
     switch (level?.toLowerCase()) {
       case 'low':
+      case 'normal':
         return 'text-spotify-green';
       case 'moderate':
         return 'text-yellow-500';
       case 'high':
+      case 'depression':
         return 'text-red-500';
       default:
         return 'text-text-gray';
     }
   };
 
-  // Helper function to get score as percentage
-  const getScorePercentage = (score) => {
-    return Math.round(score * 100);
+  // Helper function to get background color for level badge
+  const getLevelBgColor = (level) => {
+    switch (level?.toLowerCase()) {
+      case 'low':
+      case 'normal':
+        return 'bg-spotify-green/20 border-spotify-green/40';
+      case 'moderate':
+        return 'bg-yellow-500/20 border-yellow-500/40';
+      case 'high':
+      case 'depression':
+        return 'bg-red-500/20 border-red-500/40';
+      default:
+        return 'bg-zinc-700/20 border-zinc-700/40';
+    }
   };
 
   // Format date
@@ -46,58 +59,23 @@ const AnalysisResults = ({ data }) => {
         <div className="flex flex-wrap gap-4 text-sm text-text-gray">
           <span>📅 {formatDate(analyzed_at)}</span>
           <span>⏱️ Duration: {audio_duration?.toFixed(1)}s</span>
-          <span>🎯 Confidence: {getScorePercentage(prediction.confidence)}%</span>
         </div>
       </div>
 
       {/* Depression Analysis */}
-      <div className="space-y-2">
-        <div className="flex justify-between items-center text-sm">
-          <span className="text-text-white font-semibold text-lg">😓 Stress </span>
-          <span className={`font-bold text-lg ${getLevelColor(prediction.depression_level)}`}>
-            {prediction.depression_level} ({getScorePercentage(prediction.depression_score)}%)
-          </span>
-        </div>
-        <div className="w-full bg-spotify-gray rounded-full h-3">
-          <div 
-            className={`h-3 rounded-full transition-all duration-1000 ${
-              prediction.depression_level?.toLowerCase() === 'low' ? 'bg-spotify-green' :
-              prediction.depression_level?.toLowerCase() === 'moderate' ? 'bg-spotify-green' :
-              'bg-red-500'
-            }`}
-            style={{ width: `${getScorePercentage(prediction.depression_score)}%` }}
-          />
-        </div>
-        {prediction.depression_probabilities && (
-          <div className="text-xs text-text-gray mt-2 space-y-1">
-            {Object.entries(prediction.depression_probabilities).map(([level, prob]) => (
-              <div key={level} className="flex justify-between">
-                <span className="capitalize">{level}:</span>
-                <span>{getScorePercentage(prob)}%</span>
-              </div>
-            ))}
-          </div>
-        )}
+      <div className="flex items-center justify-between p-4 rounded-lg bg-zinc-800/50 border border-zinc-700/50">
+        <span className="text-text-white font-semibold text-lg">🧠 Depression</span>
+        <span className={`font-bold text-lg px-4 py-1.5 rounded-full border ${getLevelColor(prediction.depression_level)} ${getLevelBgColor(prediction.depression_level)}`}>
+          {prediction.depression_level?.toLowerCase() === 'normal' ? 'No Depression' : prediction.depression_level}
+        </span>
       </div>
 
       {/* Stress Analysis */}
-      <div className="space-y-2">
-        <div className="flex justify-between items-center text-sm">
-          <span className="text-text-white font-semibold text-lg">🧠 Depression</span>
-          <span className={`font-bold text-lg ${getLevelColor(prediction.stress_level)}`}>
-            {prediction.stress_level} ({getScorePercentage(prediction.stress_score)}%)
-          </span>
-        </div>
-        <div className="w-full bg-spotify-gray rounded-full h-3">
-          <div 
-            className={`h-3 rounded-full transition-all duration-1000 ${
-              prediction.stress_level?.toLowerCase() === 'low' ? 'bg-spotify-green' :
-              prediction.stress_level?.toLowerCase() === 'moderate' ? 'bg-spotify-green' :
-              'bg-red-500'
-            }`}
-            style={{ width: `${getScorePercentage(prediction.stress_score)}%` }}
-          />
-        </div>
+      <div className="flex items-center justify-between p-4 rounded-lg bg-zinc-800/50 border border-zinc-700/50">
+        <span className="text-text-white font-semibold text-lg">⚡ Stress</span>
+        <span className={`font-bold text-lg px-4 py-1.5 rounded-full border ${getLevelColor(prediction.stress_level)} ${getLevelBgColor(prediction.stress_level)}`}>
+          {prediction.stress_level}
+        </span>
       </div>
 
       {/* Interpretation Guide */}
@@ -105,16 +83,12 @@ const AnalysisResults = ({ data }) => {
         <h4 className="font-semibold text-text-white mb-2">📊 Understanding Your Results</h4>
         <ul className="text-sm text-text-gray space-y-2">
           <li>
-            <span className="text-spotify-green font-bold">● Score Intensity:</span> 
-            The percentage represents the strength of vocal indicators detected during this specific recording. 
-          </li>
-          <li>
-            <span className="text-blue-400 font-bold">● Confidence:</span> 
-            Higher confidence indicates the model had a clearer signal to analyze. Use this to weigh the importance of the result.
+            <span className="text-spotify-green font-bold">● Levels:</span> 
+            Results are categorized into levels based on vocal biomarker patterns detected during this recording.
           </li>
           <li>
             <span className="text-yellow-400 font-bold">● Focus on Trends:</span> 
-            Single results are snapshots. Monitor how these scores change over time in your History tab to identify personal patterns.
+            Single results are snapshots. Monitor how these levels change over time in your History tab to identify personal patterns.
           </li>
         </ul>
         <div className="mt-4 pt-3 border-t border-spotify-gray">

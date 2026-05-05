@@ -130,20 +130,10 @@ const Profile = () => {
                 <span className="text-text-gray text-sm">Open Music Player</span>
               </button>
             </div>
-
-            <button
-              onClick={() => navigate('/musichistory')}
-              className="flex flex-col items-center justify-center gap-3 p-6 transition-colors border rounded-xl bg-spotify-light-gray/20 hover:bg-spotify-light-gray/40 border-white/5"
-            >
-              <MdMusicNote className="w-8 h-8 text-spotify-green" />
-              <span className="font-semibold text-white">Music</span>
-              <span className="text-sm text-text-gray">Open Music Player</span>
-            </button>
-          </div>
         </>
       )}
     </div>
   );
-};
+}; 
 
 export default Profile;

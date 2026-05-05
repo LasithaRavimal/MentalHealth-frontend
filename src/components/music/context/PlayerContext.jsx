@@ -509,7 +509,7 @@ export const PlayerProvider = ({ children }) => {
   //   });
   // }, [session]);
   const handleEndSession = useCallback(async () => {
-  // ✅ 1. Force-save current playing duration
+  //  1. Force-save current playing duration
   if (
     audioRef.current &&
     currentSong &&
@@ -524,7 +524,7 @@ export const PlayerProvider = ({ children }) => {
     }
   }
 
-  // ✅ 2. Calculate total listening time
+  //  2. Calculate total listening time
   const totalListeningSeconds = Array.from(session.songDurations.values())
     .reduce((sum, duration) => sum + duration, 0);
 
@@ -543,13 +543,13 @@ You need ${remainingMinutes} more minute(s).`,
     return;
   }
 
-  // ✅ 3. End session + get prediction
+  //  3. End session + get prediction
   await handleSessionEnd(session, (pred) => {
     setPrediction(pred);
     setShowPredictionModal(true);
   });
 
-  // ✅ 4. IMPORTANT: Reset player state
+  //  4. IMPORTANT: Reset player state
   if (audioRef.current) {
     audioRef.current.pause();
   }
@@ -603,4 +603,3 @@ You need ${remainingMinutes} more minute(s).`,
     </PlayerContext.Provider>
   );
 };
-
