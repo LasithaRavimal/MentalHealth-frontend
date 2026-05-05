@@ -101,9 +101,8 @@ const VoiceHistoryPage = () => {
     ? {
         summaryMessage: trendData.trend_summary ?? null,
         totalSessions: trendData.total_analyses ?? 0,
-        averageConfidence: trendData.average_predictions?.confidence ?? null,
-        avgDepression: trendData.average_predictions?.depression_score ?? null,
-        avgStress: trendData.average_predictions?.stress_score ?? null,
+        avgDepressionLevel: trendData.average_predictions?.depression_level ?? null,
+        avgStressLevel: trendData.average_predictions?.stress_level ?? null,
       }
     : null;
 
@@ -267,11 +266,6 @@ const VoiceHistoryPage = () => {
                           >
                             {normalized.prediction}
                           </span>
-                          <span className="text-sm font-normal text-zinc-400">
-                            {normalized.confidence != null
-                              ? `${(normalized.confidence * 100).toFixed(1)}% Conf`
-                              : ""}
-                          </span>
                         </div>
 
                         {topEmotionEntry && (
@@ -295,7 +289,7 @@ const VoiceHistoryPage = () => {
                               <div>
                                 Depression:{" "}
                                 <span className="capitalize">
-                                  {normalized.depressionLevel}
+                                  {normalized.depressionLevel?.toLowerCase() === 'normal' ? 'No Depression' : normalized.depressionLevel}
                                 </span>
                               </div>
                             )}
@@ -384,22 +378,23 @@ const VoiceHistoryPage = () => {
                     </div>
                     <div className="bg-zinc-800/50 rounded-lg p-4 border border-zinc-700/50 flex flex-col shadow-inner">
                       <div className="text-xs text-text-gray uppercase tracking-wider mb-1">
-                        Avg Depression
+                        Depression Level
                       </div>
-                      <div className="text-2xl font-bold text-red-400">
-                        {normalizedTrend?.avgDepression != null
-                          ? `${(normalizedTrend.avgStress * 100).toFixed(0)}%`
-                          : "--"}
+                      <div className={`text-2xl font-bold capitalize ${
+                        normalizedTrend?.avgDepressionLevel?.toLowerCase() === 'normal' ? 'text-spotify-green' : 'text-red-400'
+                      }`}>
+                        {normalizedTrend?.avgDepressionLevel?.toLowerCase() === 'normal' ? 'No Depression' : (normalizedTrend?.avgDepressionLevel ?? "--")}
                       </div>
                     </div>
                     <div className="bg-zinc-800/50 rounded-lg p-4 border border-zinc-700/50 flex flex-col shadow-inner">
                       <div className="text-xs text-text-gray uppercase tracking-wider mb-1">
-                        Avg Stress
+                        Stress Level
                       </div>
-                      <div className="text-2xl font-bold text-orange-400">
-                        {normalizedTrend?.avgStress != null
-                          ? `${(normalizedTrend.avgDepression * 100).toFixed(0)}%`
-                          : "--"}
+                      <div className={`text-2xl font-bold capitalize ${
+                        normalizedTrend?.avgStressLevel?.toLowerCase() === 'low' ? 'text-spotify-green' :
+                        normalizedTrend?.avgStressLevel?.toLowerCase() === 'moderate' ? 'text-yellow-400' : 'text-orange-400'
+                      }`}>
+                        {normalizedTrend?.avgStressLevel ?? "--"}
                       </div>
                     </div>
                   </div>
