@@ -32,7 +32,7 @@ const PlaylistCard = ({ playlist, showAddButton = false, onAddSong }) => {
       >
         <div className="aspect-square bg-gradient-to-br from-spotify-green to-spotify-green-dark rounded-lg flex items-center justify-center mb-4 shadow-lg relative">
           <span className="text-5xl">🎵</span>
-          {showAddButton && isHovered && (
+          {/* {showAddButton && isHovered && (
             <button
               onClick={handleAddClick}
               className="absolute top-2 right-2 w-10 h-10 bg-spotify-green hover:bg-spotify-green-hover rounded-full flex items-center justify-center shadow-lg text-white transition-transform hover:scale-110 z-10"
@@ -40,7 +40,7 @@ const PlaylistCard = ({ playlist, showAddButton = false, onAddSong }) => {
             >
               <MdAdd className="w-5 h-5" />
             </button>
-          )}
+          )} */}
         </div>
         <h3 className="font-semibold text-white truncate mb-1">{playlist.name}</h3>
         {playlist.description && (
@@ -66,4 +66,3 @@ const PlaylistCard = ({ playlist, showAddButton = false, onAddSong }) => {
 };
 
 export default PlaylistCard;
-
