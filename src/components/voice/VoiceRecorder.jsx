@@ -1,6 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import AudioVisualizer from './AudioVisualizer';
 import ConfirmationDialog from './ConfirmationDialog';
+import {
+  getPreferredRecorderMimeType,
+  MIN_RECORDED_BLOB_SIZE_BYTES,
+  MIN_RECORDING_DURATION_SECONDS
+} from '../../utils/audioUtils';
 
 const RECORDING_DURATION = 60; // 1 minute in seconds
 
@@ -9,10 +14,12 @@ const VoiceRecorder = ({ onStop, disabled }) => {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [pendingBlob, setPendingBlob] = useState(null);
   const [timeRemaining, setTimeRemaining] = useState(RECORDING_DURATION);
+  const [error, setError] = useState(null);
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
   const timerRef = useRef(null);
   const streamRef = useRef(null);
+  const recordingStartedAtRef = useRef(null);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
@@ -42,35 +49,84 @@ const VoiceRecorder = ({ onStop, disabled }) => {
   }, []);
 
   const startRecording = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    streamRef.current = stream;
-    mediaRecorderRef.current = new MediaRecorder(stream);
-    mediaRecorderRef.current.ondataavailable = (e) => chunksRef.current.push(e.data);
-    mediaRecorderRef.current.onstop = () => {
-      const blob = new Blob(chunksRef.current, { type: 'audio/ogg; codecs=opus' });
-      setPendingBlob(blob);
-      setShowConfirmation(true);
+    try {
+      setError(null);
       chunksRef.current = [];
-      
-      // Stop all tracks to release the microphone
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const preferredMimeType = getPreferredRecorderMimeType();
+      const recorderOptions = preferredMimeType ? { mimeType: preferredMimeType } : undefined;
+
+      streamRef.current = stream;
+      mediaRecorderRef.current = recorderOptions
+        ? new MediaRecorder(stream, recorderOptions)
+        : new MediaRecorder(stream);
+
+      console.debug('[VoiceRecorder] MediaRecorder mimeType selected:', mediaRecorderRef.current.mimeType || preferredMimeType || 'browser-default');
+
+      mediaRecorderRef.current.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          chunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorderRef.current.onstop = () => {
+        const recordingDurationMs = recordingStartedAtRef.current
+          ? Date.now() - recordingStartedAtRef.current
+          : 0;
+        const blobMimeType =
+          chunksRef.current.find((chunk) => chunk.type)?.type ||
+          mediaRecorderRef.current?.mimeType ||
+          preferredMimeType ||
+          'audio/webm';
+        const blob = new Blob(chunksRef.current, { type: blobMimeType });
+
+        console.debug('[VoiceRecorder] audioBlob.type:', blob.type || '(empty)');
+        console.debug('[VoiceRecorder] audioBlob.size:', blob.size);
+        console.debug('[VoiceRecorder] recordingDurationMs:', recordingDurationMs);
+
+        if (blob.size < MIN_RECORDED_BLOB_SIZE_BYTES) {
+          setError('Recording is too short or empty. Please record at least 3 seconds and speak clearly.');
+        } else if (recordingDurationMs < MIN_RECORDING_DURATION_SECONDS * 1000) {
+          setError('Please record for at least 3 seconds before submitting.');
+        } else {
+          setPendingBlob(blob);
+          setShowConfirmation(true);
+        }
+
+        chunksRef.current = [];
+        recordingStartedAtRef.current = null;
+
+        // Stop all tracks to release the microphone
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
+        }
+      };
+
+      mediaRecorderRef.current.start();
+      recordingStartedAtRef.current = Date.now();
+      setIsRecording(true);
+      setTimeRemaining(RECORDING_DURATION);
+
+      // Start countdown timer
+      timerRef.current = setInterval(() => {
+        setTimeRemaining((prev) => {
+          if (prev <= 1) {
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (recordingError) {
+      console.error('Error starting recording:', recordingError);
+      setError('Unable to access your microphone. Please check browser permissions and try again.');
+
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
         streamRef.current = null;
       }
-    };
-    mediaRecorderRef.current.start();
-    setIsRecording(true);
-    setTimeRemaining(RECORDING_DURATION);
-
-    // Start countdown timer
-    timerRef.current = setInterval(() => {
-      setTimeRemaining((prev) => {
-        if (prev <= 1) {
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    }
   };
 
   const handleConfirm = () => {
@@ -152,6 +208,7 @@ const VoiceRecorder = ({ onStop, disabled }) => {
         >
           {isRecording ? 'Stop Recording' : 'Start Recording'}
         </button>
+        {error && <p className="text-red-500 text-xs mt-3 text-center">{error}</p>}
       </div>
 
       <ConfirmationDialog
